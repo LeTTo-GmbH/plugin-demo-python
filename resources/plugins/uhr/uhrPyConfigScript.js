@@ -7,7 +7,7 @@ try {
  *   Das Ergebnis der Konfiguration in ein verstecktes Textfeld der Klasse ".configform_config" übergeben werden
  *   Um Konflikte zu vermeiden werden alle Funktionen als innere Funktionen dieser Funktion realisiert!
  * ----------------------------------------------------------------------------------------------- */
-function configPluginUhr(dtoString) {
+function configPluginUhrPy(dtoString) {
     // -------------------------- Verbindungskonstante zu LeTTo ---------------------------------------
     // Div Element welches im Konfigurations-Formular liegt - MUSS für LETTO SO HEISSEN!!
     const config_form_div     = "#configform_div";

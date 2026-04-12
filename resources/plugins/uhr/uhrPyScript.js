@@ -9,7 +9,7 @@ try {
  *   Ist aktiv auf false, dann darf keine Eingabe vorgenommen werden können (Lösungsansicht eines Tests in LeTTo)
  *   Um Konflikte zu vermeiden werden alle Funktionen als innere Funktionen dieser Funktion realisiert!
  * ----------------------------------------------------------------------------------------------- */
-function initPluginUhr(dtoString, active) {
+function initPluginUhrPy(dtoString, active) {
     let dto = JSON.parse(dtoString);
     dto.data = JSON.parse(dto.jsonData);
     let plugin = new Object();

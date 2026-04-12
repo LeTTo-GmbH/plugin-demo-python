@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw
 # --------------------------
 # Paths (match Java project)
 # --------------------------
-SERVICEPATH = os.getenv("SERVICEPATH", "/plugindemo").rstrip("/")  # external prefix used by reverse proxy
+SERVICEPATH = os.getenv("SERVICEPATH", "/plugindemopython").rstrip("/")  # external prefix used by reverse proxy
 LOCAL_API = "/open"                                               # internal api base
 EXTERN_OPEN = f"{SERVICEPATH}/api/open"                           # external open base
 PING = "/ping"
@@ -385,10 +385,10 @@ class PluginUhr:
     Python port of at.letto.plugins.plugin.uhr.PluginUhr (relevant behavior for REST endpoints).
     """
     VERSION = "1.0"
-    HELPFILES = ["plugins/uhr/Uhr.html"]
-    JSLIBS = ["plugins/uhr/uhrScript.js", "plugins/uhr/uhrConfigScript.js"]
-    INIT_JS = "initPluginUhr"
-    CONFIG_JS = "configPluginUhr"
+    HELPFILES = ["plugins/uhr/UhrPy.html"]
+    JSLIBS = ["plugins/uhr/uhrPyScript.js", "plugins/uhr/uhrPyConfigScript.js"]
+    INIT_JS = "initPluginUhrPy"
+    CONFIG_JS = "configPluginUhrPy"
 
     def __init__(self, name: str, params: str):
         self.name = name or ""
