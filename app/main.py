@@ -25,7 +25,6 @@ from PIL import Image, ImageDraw
 CONF_STANDARD_SERVICEPATH = "/plugindemopython"
 # Name des Plugin-Service
 CONF_APPLICATION_NAME     = "plugindemopython"
-
 # Name des Services wie es am Setup registriert wird
 CONF_PLUGIN_NAME = "letto-plugindemopython"
 # Author des Plugins
@@ -48,15 +47,15 @@ CONF_JSLIBS     = ["plugins/uhr/uhrPyScript.js", "plugins/uhr/uhrPyConfigScript.
 # ----------------------------------
 # Environment aus der yml-Datei
 # ----------------------------------
-LETTO_SETUP_URI = os.getenv("letto_setup_uri", os.getenv("LETTO_SETUP_URI", "http://letto-setup.nw-letto:8096")).rstrip("/")
-LETTO_SETUP_USER = "user";
-LETTO_SETUP_PASSWORD = os.getenv("letto_user_user_password", os.getenv("LETTO_USER_USER_PASSWORD", ""))
-PLUGIN_PUBLIC_URL = os.getenv("PLUGIN_PUBLIC_URL", "").rstrip("/")
-PLUGIN_ENDPOINT_NAME = os.getenv("PLUGIN_ENDPOINT_NAME", "plugindemo")
-PLUGIN_REGISTER_ON_READY = os.getenv("PLUGIN_REGISTER_ON_READY", "true").lower() == "true"
-PLUGIN_REGISTER_RETRIES = int(os.getenv("PLUGIN_REGISTER_RETRIES", "30"))
+LETTO_SETUP_URI               = os.getenv("letto_setup_uri", os.getenv("LETTO_SETUP_URI", "http://letto-setup.nw-letto:8096")).rstrip("/")
+LETTO_SETUP_USER              = "user";
+LETTO_SETUP_PASSWORD          = os.getenv("letto_user_user_password", os.getenv("LETTO_USER_USER_PASSWORD", ""))
+PLUGIN_PUBLIC_URL             = os.getenv("PLUGIN_PUBLIC_URL", "").rstrip("/")
+PLUGIN_ENDPOINT_NAME          = os.getenv("PLUGIN_ENDPOINT_NAME", "plugindemo")
+PLUGIN_REGISTER_ON_READY      = os.getenv("PLUGIN_REGISTER_ON_READY", "true").lower() == "true"
+PLUGIN_REGISTER_RETRIES       = int(os.getenv("PLUGIN_REGISTER_RETRIES", "30"))
 PLUGIN_REGISTER_DELAY_SECONDS = float(os.getenv("PLUGIN_REGISTER_DELAY_SECONDS", "1.0"))
-NW_LETTO_ADDRESS = os.getenv("network.letto.address", os.getenv("NETWORK.LETTO.ADDRESS", "letto-plugindemopython"))
+NW_LETTO_ADDRESS              = os.getenv("network.letto.address", os.getenv("NETWORK.LETTO.ADDRESS", "letto-plugindemopython"))
 
 # --------------------------
 # Paths (match Java project)
