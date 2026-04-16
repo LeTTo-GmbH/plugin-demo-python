@@ -34,14 +34,14 @@ services:
       letto_schulen: ${LETTO_SCHULEN}
       SERVICEPATH: "/plugindemopython"
       RESOURCE_DIR: "/app/resources"
-      network.letto.address: letto-plugindemopython
-      docker.container.name: letto-plugindemopython
+      network_letto_address: letto-plugindemopython
+      docker_container_name: letto-plugindemopython
       servername: ${SERVER_NAME}
       letto_user_user_password: ${SERVICE_USER_PASSWORD}
       letto_user_gast_password: ${SERVICE_GAST_PASSWORD}
       letto_setup_uri: ${LETTO_SETUP_URI:-http://letto-setup.nw-letto:8096}
-      letto.plugin.uri.intern: ${LETTO_PLUGINDEMO_URI_INTERN:-http://letto-plugindemo.nw-letto:8080}
-      letto.plugin.uri.extern: ${LETTO_PLUGIN_URI_EXTERN:-https://${SERVER_NAME}}
+      letto_plugin_uri_intern: ${LETTO_PLUGINDEMO_URI_INTERN:-http://letto-plugindemo.nw-letto:8080}
+      letto_plugin_uri_extern: ${LETTO_PLUGIN_URI_EXTERN:-https://${SERVER_NAME}}
       letto_pathImages: /opt/letto/images
       letto_pathPlugins: /opt/letto/plugins
       letto_webPathImages: ${SERVER_NAME}/images

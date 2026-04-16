@@ -25,7 +25,7 @@ from PIL import Image, ImageDraw
 # Der Servicepath muss in der nginx-Konfiguration auf den Docker-Container des Plugins gesetzt werden -> siehe proxy/plugindemopython.conf
 CONF_STANDARD_SERVICEPATH = "/plugindemopython"
 # Name des Plugin-Service
-CONF_APPLICATION_NAME     = "plugindemopython"
+CONF_APPLICATION_NAME = "plugindemopython"
 # Name des Services wie es am Setup registriert wird
 CONF_PLUGIN_NAME = "letto-plugindemopython"
 # Author des Plugins
@@ -33,40 +33,43 @@ CONF_PLUGIN_AUTHOR = "LeTTo GmbH"
 # Lizenz des Plugins
 CONF_PLUGIN_LICENSE = "OpenSource"
 # Name des Plugins wie es in Letto erscheint
-CONF_PLUGIN     = "UhrPy"
+CONF_PLUGIN = "UhrPy"
 # Version des Plugins
-CONF_VERSION    = "1.0"
+CONF_VERSION = "1.0"
 # Java-Script function für die Initialisierung des Plugins wenn es im Java-Script modus laufen sollte
-CONF_INIT_JS    = "initPluginUhrPy"
+CONF_INIT_JS = "initPluginUhrPy"
 # Java-Script function für die Konfiguration des Plugins wenn es im Java-Script konfiguriert werden sollte
-CONF_CONFIG_JS  = "configPluginUhrPy"
+CONF_CONFIG_JS = "configPluginUhrPy"
 # Hilfe als HTML-Datei
-CONF_HELPFILES  = ["plugins/uhr/UhrPy.html"]
+CONF_HELPFILES = ["plugins/uhr/UhrPy.html"]
 # Javascript Dateien die für dieses Plugin von LeTTo eingebunden werden müssen
-CONF_JSLIBS     = ["plugins/uhr/uhrPyScript.js", "plugins/uhr/uhrPyConfigScript.js"]
+CONF_JSLIBS = ["plugins/uhr/uhrPyScript.js", "plugins/uhr/uhrPyConfigScript.js"]
 
 # ----------------------------------
 # Environment aus der yml-Datei
 # ----------------------------------
-LETTO_SETUP_URI               = os.getenv("letto_setup_uri", os.getenv("LETTO_SETUP_URI", "http://letto-setup.nw-letto:8096")).rstrip("/")
-LETTO_SETUP_USER              = "user";
-LETTO_SETUP_PASSWORD          = os.getenv("letto_user_user_password", os.getenv("LETTO_USER_USER_PASSWORD", ""))
-PLUGIN_PUBLIC_URL             = os.getenv("PLUGIN_PUBLIC_URL", "").rstrip("/")
-PLUGIN_ENDPOINT_NAME          = os.getenv("PLUGIN_ENDPOINT_NAME", "plugindemo")
-PLUGIN_REGISTER_ON_READY      = os.getenv("PLUGIN_REGISTER_ON_READY", "true").lower() == "true"
-PLUGIN_REGISTER_RETRIES       = int(os.getenv("PLUGIN_REGISTER_RETRIES", "30"))
+LETTO_SETUP_URI = os.getenv("letto_setup_uri", os.getenv("LETTO_SETUP_URI", "http://letto-setup.nw-letto:8096")).rstrip(
+    "/")
+LETTO_SETUP_USER = "user";
+LETTO_SETUP_PASSWORD = os.getenv("letto_user_user_password", os.getenv("LETTO_USER_USER_PASSWORD", ""))
+PLUGIN_PUBLIC_URL = os.getenv("PLUGIN_PUBLIC_URL", "").rstrip("/")
+PLUGIN_ENDPOINT_NAME = os.getenv("PLUGIN_ENDPOINT_NAME", "plugindemo")
+PLUGIN_REGISTER_ON_READY = os.getenv("PLUGIN_REGISTER_ON_READY", "true").lower() == "true"
+PLUGIN_REGISTER_RETRIES = int(os.getenv("PLUGIN_REGISTER_RETRIES", "30"))
 PLUGIN_REGISTER_DELAY_SECONDS = float(os.getenv("PLUGIN_REGISTER_DELAY_SECONDS", "1.0"))
-NW_LETTO_ADDRESS              = os.getenv("network.letto.address", os.getenv("NETWORK.LETTO.ADDRESS", "letto-plugindemopython"))
-DOCKER_CONTAINER_NAME         = os.getenv("docker.container.name", os.getenv("DOCKER.CONTAINER.NAME", "letto-plugindemopython"))
-LETTO_PLUGIN_URI_INTERN       = os.getenv("letto.plugin.uri.intern", os.getenv("LETTO.PLUGIN.URI.INTERN", f"http://{NW_LETTO_ADDRESS}.nw-letto:8080"))
-LETTO_PLUGIN_URI_EXTERN       = os.getenv("letto.plugin.uri.extern", os.getenv("LETTO.PLUGIN.URI.EXTERN", ""))
+NW_LETTO_ADDRESS = os.getenv("network_letto_address", os.getenv("NETWORK_LETTO_ADDRESS", "letto-plugindemopython"))
+DOCKER_CONTAINER_NAME = os.getenv("docker_container_name", os.getenv("DOCKER_CONTAINER_NAME", "letto-plugindemopython"))
+LETTO_PLUGIN_URI_INTERN = os.getenv("letto_plugin_uri_intern",
+                                    os.getenv("LETTO_PLUGIN_URI_INTERN", f"http://{NW_LETTO_ADDRESS}.nw-letto:8080"))
+LETTO_PLUGIN_URI_EXTERN = os.getenv("letto_plugin_uri_extern", os.getenv("LETTO_PLUGIN_URI_EXTERN", ""))
 
 # --------------------------
 # Paths (match Java project)
 # --------------------------
+SERVICE_NAME = CONF_APPLICATION_NAME
 SERVICEPATH = os.getenv("SERVICEPATH", CONF_STANDARD_SERVICEPATH).rstrip("/")  # external prefix used by reverse proxy
-LOCAL_API = "/open"                                               # internal api base
-EXTERN_OPEN = f"{SERVICEPATH}/api/open"                           # external open base
+LOCAL_API = "/open"  # internal api base
+EXTERN_OPEN = f"{SERVICEPATH}/api/open"  # external open base
 PING = "/ping"
 PINGOPEN = f"{SERVICEPATH}/open/ping"
 INFO = "/info"
@@ -79,6 +82,7 @@ logger = logging.getLogger("plugin-registration")
 logging.basicConfig(level=logging.INFO)
 
 _registration_task = None
+
 
 # --------------------------
 # Utilities
@@ -101,8 +105,6 @@ def get_system_info():
         "ip": ip
     }
 
-def now_time_str() -> str:
-    return datetime.now().strftime("%H:%M:%S")
 
 def parse_time_seconds(s: str) -> float:
     """
@@ -115,13 +117,17 @@ def parse_time_seconds(s: str) -> float:
     s = (s or "").strip()
     m = re.match(r"^(\d+):(\d+)$", s)
     if m:
-        h = float(m.group(1)); mi = float(m.group(2))
+        h = float(m.group(1));
+        mi = float(m.group(2))
         return h * 3600.0 + mi * 60.0
     m = re.match(r"^(\d+):(\d+):(\d+\.?\d*)$", s)
     if m:
-        h = float(m.group(1)); mi = float(m.group(2)); sec = float(m.group(3))
+        h = float(m.group(1));
+        mi = float(m.group(2));
+        sec = float(m.group(3))
         return h * 3600.0 + mi * 60.0 + sec
     raise ValueError("invalid time format")
+
 
 def equals_with_tolerance(a: float, b: float, toleranz: float, mode: str) -> bool:
     # mode: "RELATIV" or "ABSOLUT"
@@ -130,6 +136,7 @@ def equals_with_tolerance(a: float, b: float, toleranz: float, mode: str) -> boo
     # RELATIV (default)
     ref = max(abs(a), abs(b), 1e-12)
     return abs(a - b) <= toleranz * ref
+
 
 def read_resource_text(rel_path: str) -> str:
     """
@@ -143,6 +150,7 @@ def read_resource_text(rel_path: str) -> str:
             return f.read()
     except FileNotFoundError:
         return f"@ERROR: resource not found: {rel_path}"
+
 
 def draw_clock_png(hh: int, mm: int, size: int = 320, bgcolor: str = "white") -> bytes:
     # Background color mapping similar to Java (white, black, red, green, blue, yellow)
@@ -190,10 +198,13 @@ def draw_clock_png(hh: int, mm: int, size: int = 320, bgcolor: str = "white") ->
     img.save(buf, format="PNG")
     return buf.getvalue()
 
+
 def png_b64(png: bytes) -> str:
     return base64.b64encode(png).decode("ascii")
 
+
 info = get_system_info()
+
 
 # --------------------------
 # DTOs (match Java field names)
@@ -204,6 +215,7 @@ class JavascriptLibrary(BaseModel):
     name: str = ""
     content: str = ""
     local: bool = True
+
 
 class PluginGeneralInfo(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -230,20 +242,24 @@ class PluginGeneralInfo(BaseModel):
     useMVars: bool = True
     pluginServiceURL: str = ""
 
+
 class PluginGeneralInfoList(BaseModel):
     model_config = ConfigDict(extra="ignore")
     list: List[PluginGeneralInfo] = Field(default_factory=list)
+
 
 class ImageInfoDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     filename: str = ""
     url: str = ""
 
+
 class ImageUrlDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     imageUrl: str = ""
     imageInfo: Optional[ImageInfoDto] = None
     error: str = ""
+
 
 class ImageBase64Dto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -252,10 +268,12 @@ class ImageBase64Dto(BaseModel):
     height: int = 320
     error: str = ""
 
+
 class PluginQuestionDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: int = 0
     vars: Optional[Dict[str, Any]] = None
+
 
 class PluginRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -266,14 +284,17 @@ class PluginRequestDto(BaseModel):
     q: Optional[PluginQuestionDto] = None
     pluginMaximaCalcMode: Optional[Dict[str, Any]] = None
 
+
 class PluginParserRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     typ: str
     params: List[str] = Field(default_factory=list)
 
+
 class PluginEinheitRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     params: List[str] = Field(default_factory=list)
+
 
 class CalcErgebnisDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -281,16 +302,19 @@ class CalcErgebnisDto(BaseModel):
     unit: Optional[str] = None
     type: str = "STRING"
 
+
 class PluginAnswerDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     ergebnis: Optional[CalcErgebnisDto] = None
     answerText: str = ""
     ze: str = ""
 
+
 class ToleranzDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     toleranz: float = 1e-10
     mode: str = "RELATIV"
+
 
 class PluginScoreInfoDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -302,6 +326,7 @@ class PluginScoreInfoDto(BaseModel):
     feedback: str = ""
     htmlScoreInfo: str = ""
 
+
 class PluginDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     tagName: str = ""
@@ -310,6 +335,7 @@ class PluginDto(BaseModel):
     height: int = 360
     params: Dict[str, str] = Field(default_factory=dict)
     jsonData: Optional[str] = None
+
 
 class LoadPluginRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -321,6 +347,7 @@ class LoadPluginRequestDto(BaseModel):
     nr: int = 0
     configurationID: Optional[str] = None
 
+
 class PluginRenderLatexRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     typ: str
@@ -329,6 +356,7 @@ class PluginRenderLatexRequestDto(BaseModel):
     pluginDto: Optional[PluginDto] = None
     answer: str = ""
     mode: str = "default"
+
 
 class PluginRenderResultRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -343,11 +371,13 @@ class PluginRenderResultRequestDto(BaseModel):
     answerDto: Optional[PluginAnswerDto] = None
     grade: float = 1.0
 
+
 class PluginRenderDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     html: str = ""
     latex: str = ""
     images: Dict[str, str] = Field(default_factory=dict)
+
 
 class PluginScoreRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -361,6 +391,7 @@ class PluginScoreRequestDto(BaseModel):
     answerDto: Optional[PluginAnswerDto] = None
     grade: float = 1.0
 
+
 class PluginAngabeRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     typ: str
@@ -369,14 +400,17 @@ class PluginAngabeRequestDto(BaseModel):
     text: str = ""
     q: Optional[PluginQuestionDto] = None
 
+
 class PluginUpdateJavascriptRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     pluginstring: str = ""
     data: str = ""
 
+
 class PluginDatasetListDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     list: List[Any] = Field(default_factory=list)
+
 
 class PluginConfigurationInfoRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -385,6 +419,7 @@ class PluginConfigurationInfoRequestDto(BaseModel):
     config: str = ""
     configurationID: Optional[str] = None
     timeout: int = 300
+
 
 class PluginConfigurationInfoDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -401,9 +436,11 @@ class PluginConfigurationInfoDto(BaseModel):
     javaScriptMethode: Optional[str] = None
     configurationUrl: str = ""
 
+
 class PluginConfigurationRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     configurationID: str
+
 
 class PluginConfigDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -415,11 +452,13 @@ class PluginConfigDto(BaseModel):
     tagName: str = ""
     params: Dict[str, Any] = Field(default_factory=dict)
 
+
 class PluginSetConfigurationDataRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     configurationID: str
     configuration: str = ""
     questionDto: Optional[PluginQuestionDto] = None
+
 
 class AdminInfoDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -440,6 +479,7 @@ class AdminInfoDto(BaseModel):
     uriExtern: str = ""
     uriExternEnabled: bool = True
 
+
 class ServiceInfoDTO(BaseModel):
     model_config = ConfigDict(extra="ignore")
     serviceName: str = CONF_APPLICATION_NAME
@@ -452,14 +492,15 @@ class ServiceInfoDTO(BaseModel):
     adminInfoDto: Optional[AdminInfoDto] = None
     jarLibs: List[str] = Field(default_factory=list)
 
+
 # --------------------------
 # Plugin: die eigentliche Pluginklasse
 # --------------------------
 class PluginDemo:
-    VERSION   = CONF_VERSION
+    VERSION = CONF_VERSION
     HELPFILES = CONF_HELPFILES
-    JSLIBS    = CONF_JSLIBS
-    INIT_JS   = CONF_INIT_JS
+    JSLIBS = CONF_JSLIBS
+    INIT_JS = CONF_INIT_JS
     CONFIG_JS = CONF_CONFIG_JS
 
     def __init__(self, name: str, params: str):
@@ -505,7 +546,7 @@ class PluginDemo:
         m = re.match(r"^\s*bgcolor\s*=\s*([a-zA-Z]+)\s*$", p)
         if m:
             color = m.group(1).lower()
-            allowed = {"white","black","red","green","blue","yellow"}
+            allowed = {"white", "black", "red", "green", "blue", "yellow"}
             if color in allowed:
                 self.bgcolor = color
             else:
@@ -557,7 +598,8 @@ class PluginDemo:
     def get_angabe(self) -> str:
         return "Stelle die Uhr ab und gib die Zeit im Format HH:MM ein."
 
-    def score(self, antwort: str, toleranz: Optional[ToleranzDto], answerDto: Optional[PluginAnswerDto], grade: float) -> PluginScoreInfoDto:
+    def score(self, antwort: str, toleranz: Optional[ToleranzDto], answerDto: Optional[PluginAnswerDto],
+              grade: float) -> PluginScoreInfoDto:
         ze = answerDto.ze if answerDto else ""
         correct_text = answerDto.answerText if answerDto else ""
         # default result = wrong
@@ -582,6 +624,7 @@ class PluginDemo:
             pass
         return info
 
+
 # --------------------------
 # Plugin registry (like StartupConfiguration.registerPlugin)
 # --------------------------
@@ -589,10 +632,12 @@ REGISTERED_PLUGINS: Dict[str, str] = {
     CONF_PLUGIN: "PluginDemo",
 }
 
+
 def create_plugin(typ: str, name: str, params: str) -> Optional[PluginDemo]:
     if typ == CONF_PLUGIN:
         return PluginDemo(name, params)
     return None
+
 
 def _build_service_base_urls() -> dict:
     """
@@ -629,12 +674,12 @@ async def _wait_until_service_is_ready() -> dict:
                 pluginlist_ok = (await client.get(urls["pluginlist"])).status_code == 200
                 generalinfolist_ok = (await client.get(urls["generalinfolist"])).status_code == 200
                 generalinfo_ok = (
-                    await client.post(
-                        urls["generalinfo"],
-                        content="Uhr",
-                        headers={"Content-Type": "text/plain; charset=utf-8"},
-                    )
-                ).status_code == 200
+                                     await client.post(
+                                         urls["generalinfo"],
+                                         content="Uhr",
+                                         headers={"Content-Type": "text/plain; charset=utf-8"},
+                                     )
+                                 ).status_code == 200
 
                 if ping_ok and pluginlist_ok and generalinfolist_ok and generalinfo_ok:
                     logger.info("Service ist vollständig erreichbar und bereit für Setup-Registrierung")
@@ -647,26 +692,34 @@ async def _wait_until_service_is_ready() -> dict:
 
     raise RuntimeError("Service wurde vor der Registrierung nicht rechtzeitig erreichbar")
 
+
 # --------------------------
 # Plugin am Setup registrieren
 # --------------------------
 SERVICE_START_TIME = int(time.time())  # entspricht System.currentTimeMillis()/1000
+
+
 def now_time_int() -> int:
     return int(time.time())
+
+
 def now_time_str() -> str:
     return datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+
 def _build_registration_payload(urls: dict, info: dict) -> dict:
     last_registration_time = now_time_int()
     return {
-        "name": CONF_PLUGIN_NAME,              # Name des Services
-        "version": CONF_VERSION,               # Version des Services
-        "author": CONF_PLUGIN_AUTHOR,          # Information über den Autor des Services
-        "license": CONF_PLUGIN_LICENSE,        # Information über die Lizenz des Services
-        "bs": info["bs"],                      # Betriebssystem auf dem das Service läuft
-        "ip": info["ip"],                      # IP des Services
-        "encoding": "UTF-8",                   # Zeichen-Encoding
-        "programmingLanguage": "python",       # Programmiersprache in der das Service Programmiert wurde
-        "nwLettoAddress": NW_LETTO_ADDRESS,    # Adresse innerhalb des Docker-Netzwerkes nw-letto, wenn das Service dort direkt erreichbar ist
+        "name": CONF_PLUGIN_NAME,  # Name des Services
+        "version": CONF_VERSION,  # Version des Services
+        "author": CONF_PLUGIN_AUTHOR,  # Information über den Autor des Services
+        "license": CONF_PLUGIN_LICENSE,  # Information über die Lizenz des Services
+        "bs": info["bs"],  # Betriebssystem auf dem das Service läuft
+        "ip": info["ip"],  # IP des Services
+        "encoding": "UTF-8",  # Zeichen-Encoding
+        "programmingLanguage": "python",  # Programmiersprache in der das Service Programmiert wurde
+        "nwLettoAddress": NW_LETTO_ADDRESS,
+        # Adresse innerhalb des Docker-Netzwerkes nw-letto, wenn das Service dort direkt erreichbar ist
         # Name des Docker-Containers, dieser muss eindeutig sein!!
         # Bei externen Services auf anderen Servcern gibt es keinen dockerName, dann muss die externe URI eindeutig sein
         "dockerName": DOCKER_CONTAINER_NAME,
@@ -675,22 +728,24 @@ def _build_registration_payload(urls: dict, info: dict) -> dict:
         # Ist die uriIntern nicht gesetzt dann wird wenn extern=true ist auf der uriExtern verbunden.
         # Läuft das Service also auf einem Fremdserver muss Benutzername und Passwort angegeben sein um sich am Fremdserver zu authentifizieren oder alle Endpunkte müssen offen sein.
         "uriIntern": LETTO_PLUGIN_URI_INTERN,
-        "extern": False,             # Service ist von Extern (Browser) direkt erreichbar
+        "extern": False,  # Service ist von Extern (Browser) direkt erreichbar
         # externe URI mit der vom Browser auf das Service zugegriffen werden kann (wenn extern=true)
         # Hier muss die gesamte absolute Basis-URI angegeben werden unter der die Plugin-Endpoints liegen
         "uriExtern": LETTO_PLUGIN_URI_EXTERN,
-        "plugin": True,             # Gibt an ob es sich bei dem Service um ein Plugin handelt
-        "scaleable": False,         # Gibt an ob das Service skalierbar (mehrfach vorkommen kann) ist
-        "stateless": True,          # Gibt an ob das Service nur Stateless-Endpoints hat
-        "username":"",              # Benutzername wenn das Service mit einer User-Authentifizierung am Plugin anmelden muss
-        "password":"",              # Passwort wenn das Service mit einer User-Authentifizierung am Plugin anmelden muss
-        "usePluginToken":False,     # Wenn hier true steht, dann muss für das Plugin ein Token verwendet werden, der in der Schule gespeichert ist. Dieser Token muss für die Authentifizierung am Plugin verwendet werden. - Ist noch nicht implementiert.
-        "serviceStartTime":SERVICE_START_TIME,       # Datum und Uhrzeit an der das Service gestartet wurde als DateInteger
-        "lastRegistrationTime" : last_registration_time,   # Datum und Uhrzeit der letzten Service-Registratur
-        "params":"",                 # zusätzliche nicht weiter definierte Parameter des Plugins
-        "htmlServiceStartTime" : datetime.fromtimestamp(SERVICE_START_TIME).strftime("%d.%m.%Y %H:%M:%S"),
-        "htmlLastRegistrationTime":now_time_str()
+        "plugin": True,  # Gibt an ob es sich bei dem Service um ein Plugin handelt
+        "scalable": False,  # Gibt an ob das Service skalierbar (mehrfach vorkommen kann) ist
+        "stateless": True,  # Gibt an ob das Service nur Stateless-Endpoints hat
+        "username": "",  # Benutzername wenn das Service mit einer User-Authentifizierung am Plugin anmelden muss
+        "password": "",  # Passwort wenn das Service mit einer User-Authentifizierung am Plugin anmelden muss
+        "usePluginToken": False,
+        # Wenn hier true steht, dann muss für das Plugin ein Token verwendet werden, der in der Schule gespeichert ist. Dieser Token muss für die Authentifizierung am Plugin verwendet werden. - Ist noch nicht implementiert.
+        "serviceStartTime": SERVICE_START_TIME,  # Datum und Uhrzeit an der das Service gestartet wurde als DateInteger
+        "lastRegistrationTime": last_registration_time,  # Datum und Uhrzeit der letzten Service-Registratur
+        "params": {},  # zusätzliche nicht weiter definierte Parameter des Plugins
+        "htmlServiceStartTime": datetime.fromtimestamp(SERVICE_START_TIME).strftime("%d.%m.%Y %H:%M:%S"),
+        "htmlLastRegistrationTime": now_time_str()
     }
+
 
 async def register_plugin_in_setup() -> None:
     if not PLUGIN_REGISTER_ON_READY:
@@ -702,7 +757,7 @@ async def register_plugin_in_setup() -> None:
         return
 
     urls = await _wait_until_service_is_ready()
-    payload = _build_registration_payload(urls)
+    payload = _build_registration_payload(urls, info)
 
     # TODO:
     # Diesen Pfad bitte auf den exakten Java-Setup-Endpoint anpassen,
@@ -737,6 +792,7 @@ async def register_plugin_in_setup() -> None:
 
     raise RuntimeError("Plugin konnte nicht beim Setup registriert werden")
 
+
 # --------------------------
 # FastAPI app
 # --------------------------
@@ -755,6 +811,8 @@ app = FastAPI(
     version=CONF_VERSION,
     lifespan=lifespan,
 )
+
+
 def mount_internal_open(router_prefix: str) -> APIRouter:
     r = APIRouter(prefix=router_prefix)
 
@@ -896,18 +954,22 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
 
     return r
 
+
 # Info endpoints (both internal and external convenience)
 @app.get(PING, response_class=PlainTextResponse)
 def ping():
     return "pong"
 
+
 @app.get(f"{SERVICEPATH}{PING}", response_class=PlainTextResponse)
 def ping_servicepath():
     return "pong"
 
+
 @app.get(PINGOPEN, response_class=PlainTextResponse)
 def ping_open():
     return "pong"
+
 
 @app.get(INFO, response_model=ServiceInfoDTO)
 def info():
@@ -919,9 +981,11 @@ def info():
         adminInfoDto=AdminInfoDto(applicationname="plugindemo"),
     )
 
+
 @app.get(INFO_OPEN, response_model=ServiceInfoDTO)
 def info_open():
     return info()
+
 
 # Mount internal open API at /open and (for proxy setups) also under /plugindemo/open
 app.include_router(mount_internal_open(LOCAL_API))
@@ -930,14 +994,17 @@ app.include_router(mount_internal_open(f"{SERVICEPATH}/open"))
 # External open controller forwards to internal reload/pluginlist etc in Java; we expose the same subset
 extern_router = APIRouter(prefix=EXTERN_OPEN)
 
+
 @extern_router.get("/pluginlist")
 def extern_pluginlist():
     return list(REGISTERED_PLUGINS.keys())
+
 
 @extern_router.get("/generalinfolist", response_model=PluginGeneralInfoList)
 def extern_generalinfolist():
     lst = [create_plugin(t, "", "").plugin_general_info(t) for t in REGISTERED_PLUGINS.keys()]
     return PluginGeneralInfoList(list=lst)
+
 
 @extern_router.post("/generalinfo", response_model=PluginGeneralInfo)
 def extern_generalinfo(plugintyp: str = Body(..., embed=False)):
@@ -945,6 +1012,7 @@ def extern_generalinfo(plugintyp: str = Body(..., embed=False)):
     if not pi:
         return PluginGeneralInfo(typ=plugintyp)
     return pi.plugin_general_info(plugintyp)
+
 
 @extern_router.post("/reloadplugindto", response_model=PluginDto)
 def extern_reload(req: LoadPluginRequestDto):
@@ -956,6 +1024,5 @@ def extern_reload(req: LoadPluginRequestDto):
     tag_name = f"{(req.q.id if req.q else 0)}_{req.name}_{req.nr}"
     return PluginDto(tagName=tag_name, imageUrl="data:image/png;base64," + img.base64Image, width=360, height=360)
 
+
 app.include_router(extern_router)
-
-
