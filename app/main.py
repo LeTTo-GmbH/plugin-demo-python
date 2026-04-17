@@ -273,12 +273,65 @@ class ImageBase64Dto(BaseModel):
     imageInfoDto: Optional[ImageInfoDto] = None
     error: str = ""
 
+class CalcErgebnisDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    string: Optional[str] = None
+    json: Optional[str] = None
+    type: str = "STRING"
+
+class ToleranzDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    toleranz: float = 1e-10
+    mode: str = "RELATIV"
+
+class CalcParamsDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    optmode: str = ""
+    toleranz: Optional[ToleranzDto] = None
+    rekursiv: bool = True
+    symbolicMode: bool = False
+    showpotenz: str = "AUTO"           # AUTO, POW, SQRT
+    calcmode: str = "MAXIMA"           # MAXIMA, LOESUNG, ERGEBNIS, VIEW
+    ausmultiplizieren: bool = true
+    herausheben: bool = true
+    forceOpt: bool = true
+
+class VarDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    calcErgebnisDto: Optional[CalcErgebnisDto] = None
+    ze: str = ""
+    cp: Optional[CalcParamsDto] = None
+
+class VarHashDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    vars: Dict[str, VarDto] = Field(default_factory=dict)
+
+class PluginSubQuestionDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    name: str = ""            # Name der SubQuestion
+    points: float = 0.0       # die erreichbare Punkteanzahl einer Teilfrage
 
 class PluginQuestionDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: int = 0
-    vars: Optional[Dict[str, Any]] = None
+    name: str = ""
+    maximaDefs: str = ""
+    moodlemac: str = ""
+    points: float = 0.0
+    subQuestions: List[PluginSubQuestionDto] = Field(default_factory=list)
+    maxima: str = ""
+    images: List[str] = Field(default_factory=list)
+    imagesContent: List[str] = Field(default_factory=list)
+    dsNr: int = 0
+    vars: Optional[VarHashDto] = None
+    cvars: Optional[VarHashDto] = None
+    varsMaxima: Optional[VarHashDto] = None
+    mvars: Optional[VarHashDto] = None
 
+class PluginMaximaCalcModeDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    maxima: bool = False
+    preCalc: bool = False
 
 class PluginRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -287,39 +340,31 @@ class PluginRequestDto(BaseModel):
     config: str = ""
     params: str = ""
     q: Optional[PluginQuestionDto] = None
-    pluginMaximaCalcMode: Optional[Dict[str, Any]] = None
+    pluginMaximaCalcMode: Optional[PluginMaximaCalcModeDto] = None
 
 
 class PluginParserRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    typ: str
-    params: List[str] = Field(default_factory=list)
+    typ: str = ""
+    name: str = ""
+    config: str = ""
+    vars: Optional[VarHashDto] = None
+    cp: Optional[CalcParamsDto] = None
+    p: List[CalcErgebnisDto] = Field(default_factory=list)
 
 
 class PluginEinheitRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    params: List[str] = Field(default_factory=list)
-
-
-class CalcErgebnisDto(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    string: Optional[str] = None
-    json: Optional[str] = None
-    type: str = "STRING"
-
+    typ: str = ""
+    name: str = ""
+    config: str = ""
+    p: List[str] = Field(default_factory=list)
 
 class PluginAnswerDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     ergebnis: Optional[CalcErgebnisDto] = None
     answerText: str = ""
     ze: str = ""
-
-
-class ToleranzDto(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    toleranz: float = 1e-10
-    mode: str = "RELATIV"
-
 
 class PluginScoreInfoDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -372,7 +417,7 @@ class PluginRenderResultRequestDto(BaseModel):
     pluginDto: Optional[PluginDto] = None
     antwort: str = ""
     toleranz: Optional[ToleranzDto] = None
-    varsQuestion: Optional[Dict[str, Any]] = None
+    varsQuestion: Optional[VarHashDto] = None
     answerDto: Optional[PluginAnswerDto] = None
     grade: float = 1.0
 
@@ -391,7 +436,7 @@ class PluginScoreRequestDto(BaseModel):
     pluginDto: Optional[PluginDto] = None
     antwort: str = ""
     toleranz: Optional[ToleranzDto] = None
-    varsQuestion: Optional[Dict[str, Any]] = None
+    varsQuestion: Optional[VarHashDto] = None
     answerDto: Optional[PluginAnswerDto] = None
     grade: float = 1.0
 
@@ -407,8 +452,11 @@ class PluginAngabeRequestDto(BaseModel):
 
 class PluginUpdateJavascriptRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    pluginstring: str = ""
-    data: str = ""
+    typ: str = ""            # Typ des Plugins
+    name: str = ""           # Name des Plugins in der Frage
+    config: str = ""         # Konfigurationsstring des Plugins
+    pluginDef: str = ""      # akt. Plugin-Definition
+    jsResult: str = ""       # Rückgabe von Javascript
 
 class PluginDatasetDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -448,8 +496,8 @@ class PluginConfigurationInfoDto(BaseModel):
 
 class PluginConfigurationRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    configurationID: str
-
+    typ: str = ""
+    configurationID: str = ""
 
 class PluginConfigDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -469,6 +517,7 @@ class PluginConfigDto(BaseModel):
 
 class PluginSetConfigurationDataRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
+    typ: str = ""
     configurationID: str
     configuration: str = ""
     questionDto: Optional[PluginQuestionDto] = None
