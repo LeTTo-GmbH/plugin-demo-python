@@ -12,12 +12,11 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-
 from fastapi import FastAPI, APIRouter, Body
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field, ConfigDict
-
 from PIL import Image, ImageDraw
+from dataclasses import dataclass, field
 
 # --------------------------
 # CONFIGURATION
@@ -323,7 +322,7 @@ class ImageBase64Dto(BaseModel):
 class CalcErgebnisDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     string: Optional[str] = None
-    json: Optional[str] = None
+    json_value: Optional[str] = Field(default=None, alias="json")
     type: Optional[str] = "STRING"
 
 
@@ -906,9 +905,8 @@ async def register_plugin_in_setup() -> None:
 # ------------------------------------------
 # Zustandsverarbeitung für die Konfiguration
 # ------------------------------------------
-class PluginConfigurationState(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
+@dataclass
+class PluginConfigurationState:
     configurationID: str                                                         # Konfigurations ID
     typ: str = ""                                                                # Typ des Plugins
     name: str = ""                                                               # Name des Plugins
@@ -1170,7 +1168,6 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
                 name=req.name or "",
                 config=req.config or "",
                 plugin_Demo=pi,
-                plugin_ConfigurationInfoDto=None,
                 question_dto=None,
                 timeout=req.timeout or 300,
             )
@@ -1306,7 +1303,7 @@ def extern_pluginlist():
 @extern_router.get("/generalinfolist", response_model=PluginGeneralInfoList)
 def extern_generalinfolist():
     lst = [create_plugin(t, "", "").plugin_general_info(t) for t in REGISTERED_PLUGINS.keys()]
-    return PluginGeneralInfoList(list=lst)
+    return PluginGeneralInfoList(pluginInfos=lst)
 
 
 @extern_router.post("/generalinfo", response_model=PluginGeneralInfo)
