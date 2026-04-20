@@ -44,6 +44,58 @@ CONF_CONFIG_JS = "configPluginUhrPy"
 CONF_HELPFILES = ["plugins/uhr/UhrPy.html"]
 # Javascript Dateien die für dieses Plugin von LeTTo eingebunden werden müssen
 CONF_JSLIBS = ["plugins/uhr/uhrPyScript.js", "plugins/uhr/uhrPyConfigScript.js"]
+# Namen der Wiki-Seite wenn eine Doku am LeTTo-Wiki vorliegt
+CONF_wikiHelp = "Plugins"
+# Hilfe-URL für die Beschreibung des Plugins
+CONF_helpUrl=""
+# Gibt an ob die Standard-Plugin-Configuration verwendet werden soll
+CONF_defaultPluginConfig = false;
+# Konfigurationsstring des Elements
+CONF_config;
+# Typ des Plugins
+CONF_typ;
+# Breite des zu erzeugenden Bildes
+CONF_width = 400;
+# Höhe des zu erzeugenden Bildes
+CONF_height = 400;
+# Größe des Bildes in Prozent
+CONF_imageWidthProzent = 100;
+# True wenn das Plugin CalcErgebnis und VarHash als JSON verarbeiten kann
+CONF_math = false;
+# Version des Plugins
+CONF_version = "1.0";
+# Plugin Hilfe als HTML für den Plugin - Dialog
+CONF_helpfiles = {"plugins/plugin.html"};
+# Javascript Libraries für das Plugin
+CONF_javascriptLibs = {"plugins/plugintools.js"};
+# Name der JAVA-Script Methode zur Plugin-Initialisierung für die interaktive Ergebniseingabe
+CONF_initPluginJS = "";
+# gibt an ob das Plugin eine Java-Script Schnittstelle bei der Beispieldarstellung hat
+CONF_javaScript = false;
+# Plugin ist stateless und liefert bei gleicher Angabe immer das gleiche Verhalten
+CONF_cacheable = true;
+# Gibt an ob im Plugin die Frage benötigt wird
+CONF_useQuestion = true;
+# gibt an ob die Datensatz-Variable ohne Konstante benötigt werden
+CONF_useVars = true;
+# gibt an ob die Datensatz-Variable mit Konstanten benötigt werden
+CONF_useCVars = true;
+# gibt an ob die Maxima-Durchrechnungen ohne eingesetzte Datensätze benötigt werden
+CONF_useMaximaVars = true;
+# gibt an ob die Maxima-Durchrechnungen mit eingesetzten Datensätzen benötigt werden
+CONF_useMVars = true;
+# Konfigurations-Mode für die Konfiguration des Plugins
+CONF_configurationMode = PluginConfigurationInfoDto.CONFIGMODE_JSF;
+# Gibt an, ob im Plugin-Konfig-Dialog Datensätze hinzugefügt werden können. => Button AddDataset in Fußzeile des umgebenden Dialogs, (nicht vom Plugin)
+CONF_addDataSet = true;
+# Gibt an, ob das Plugin über den Browser direkt erreichbar ist
+CONF_externUrl = false;
+# Gibt an ob im Plugin bei der Konfiguration die Maxima-Berechnung durchlaufen werden kann. => Button Maxima in Fußzeile des umgebenden Dialogs, (nicht vom Plugin)
+CONF_calcMaxima = true;
+# Name der JAVA-Script Methode zur Configuration des Plugins
+CONF_configPluginJS = "configPlugin";
+# URL des Plugin-Services für die direkte Kommunikation
+CONF_pluginServiceURL = "";
 
 # ----------------------------------
 # Environment aus der yml-Datei
@@ -392,7 +444,7 @@ class PluginDto(BaseModel):
     width: int = 500                  # Breite des Plugin-Bereiches in Pixel
     height: int = 500                 # Höhe des Plugin-Bereiches in Pixel
     params: Optional[Dict[str, str]] = Field(default_factory=dict)   # Parameter welche vom Plugin an Javascript weitergegeben werden sollen, wird von LeTTo nicht verwendet
-    jsonData: Optional[str] = None                         # JSON-String welcher vom Plugin an Javascript weitergegeben werden soll, wird von LeTTo nicht verwendet
+    jsonData: Optional[str] = None    # JSON-String welcher vom Plugin an Javascript weitergegeben werden soll, wird von LeTTo nicht verwendet
 
 class LoadPluginRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -511,16 +563,16 @@ class PluginConfigDto(BaseModel):
     typ: Optional[str] = ""                                        # Typ des Plugins
     name: Optional[str] = ""                                       # Name des Plugins im Dialog
     config: Optional[str] = ""                                     # Konfigurationsstring
-    tagName: Optional[str] = ""                                    # Eindeutiger Bezeichner des PluginTags
-    width: int = 500                                     # Breite des Plugin-Bereiches in Pixel
-    height: int = 500                                    # Höhe des Plugin-Bereiches in Pixel
+    tagName: Optional[str] = "plugintag"                           # Eindeutiger Bezeichner des PluginTags
+    width: int = 500                                               # Breite des Plugin-Bereiches in Pixel
+    height: int = 500                                              # Höhe des Plugin-Bereiches in Pixel
     configurationID: Optional[str] = ""                            # Configuration-ID
-    errorMsg: Optional[str] = ""                                   # Fehlermeldung wenn das DTO nicht korrekt erzeugt wurde
-    pluginDto: Optional[PluginDto] = None                # PluginDto für die Initialisierung des Plugins
+    errorMsg: Optional[str] = None                                 # Fehlermeldung wenn das DTO nicht korrekt erzeugt wurde
+    pluginDto: Optional[PluginDto] = None                          # PluginDto für die Initialisierung des Plugins
     pluginDtoUri: Optional[str] = ""                               # Uri am Question-Service für das PluginDto
     pluginDtoToken: Optional[str] = ""                             # Token welcher an der pluginDtoUri benötigt wird
     params: Optional[Dict[str, Any]] = Field(default_factory=dict) # Parameter welche vom Plugin an Javascript weitergegeben werden sollen
-    jsonData: Optional[str] = ""                    # JSON-String welcher vom Plugin an Javascript weitergegeben werden soll
+    jsonData: Optional[str] = None                                 # JSON-String welcher vom Plugin an Javascript weitergegeben werden soll
 
 class PluginSetConfigurationDataRequestDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -861,11 +913,14 @@ async def register_plugin_in_setup() -> None:
 class PluginConfigurationState(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    configurationID: str
-    typ: str = ""
-    name: str = ""
-    config: str = ""
-    questionDto: Optional[PluginQuestionDto] = None
+    configurationID: str                                                         # Konfigurations ID
+    typ: str = ""                                                                # Typ des Plugins
+    name: str = ""                                                               # Name des Plugins
+    config: str = ""                                                             # Configurationsstring des Plugins
+    pluginDemo: Optional[PluginDemo] = None                                      # Plugin das gerade bearbeitet wird
+    pluginConfigurationInfoDto: Optional[PluginConfigurationInfoDto] = None      # Plugin Configurations-Information
+    pluginConfigDto: Optional[PluginConfigDto] = None                            # PluginConfigDto welches aktuell gültig ist
+    questionDto: Optional[PluginQuestionDto] = None                              # PluginQuestionDto der Frage welche zu dem Plugin gehört
     timeout: int = 300
     lastAccessTime: int = 0
 
@@ -901,12 +956,12 @@ def get_configuration_state(configuration_id: Optional[str]) -> Optional[PluginC
     state.touch()
     return state
 
-
 def create_or_update_configuration_state(
     configuration_id: str,
     typ: str = "",
     name: str = "",
     config: str = "",
+    plugin_Demo: Optional[PluginDemo] = None,
     question_dto: Optional[PluginQuestionDto] = None,
     timeout: int = 300,
 ) -> PluginConfigurationState:
@@ -914,12 +969,21 @@ def create_or_update_configuration_state(
 
     state = CONFIG_STATES.get(configuration_id)
     if state is None:
+        plugin_Config_dto = PluginConfigDto(
+            typ=typ,
+            name=name,
+            config=config,
+            tagName="name",
+            pluginDto=PluginDto(),
+            params={"config": config},
+        )
         state = PluginConfigurationState(
             configurationID=configuration_id,
             typ=typ or "",
             name=name or "",
             config=config or "",
-            questionDto=question_dto,
+            pluginDemo = plugin_Demo,
+            pluginConfigDto=plugin_Config_dto,
             timeout=timeout,
             lastAccessTime=int(time.time()),
         )
@@ -932,6 +996,26 @@ def create_or_update_configuration_state(
         state.name = name or state.name
     if config is not None:
         state.config = config
+    if plugin_Demo is not None:
+        state.pluginDemo = plugin_Demo
+        state.pluginConfigurationInfoDto=pluginConfigurationInfoDto(
+            configurationID=configuration_id,
+            configurationMode=plugin_Demo.configurationMode,
+            useQuestion=CONF_useQuestion,
+            useVars=CONF_useVars,
+            useCVars=CONF_useCVars,
+            useMaximaVars=CONF_useMaximaVars,
+            useMVars=CONF_useMVars,
+            addDataSet=CONF_addDataSet,
+            calcMaxima=CONF_calcMaxima,
+            externUrl=CONF_externUrl,
+            javaScriptMethode="configPlugin",
+            configurationUrl="",
+        )
+    if plugin_ConfigurationInfoDto is not None:
+        state.pluginConfigurationInfoDto = plugin_ConfigurationInfoDto
+    if plugin_ConfigDto is not None:
+        state.pluginConfigDto = plugin_ConfigDto
     if question_dto is not None:
         state.questionDto = question_dto
     if timeout:
@@ -1093,6 +1177,8 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
                 typ=req.typ or "",
                 name=req.name or "",
                 config=req.config or "",
+                plugin_Demo=pi,
+                plugin_ConfigurationInfoDto=None,
                 question_dto=None,
                 timeout=req.timeout or 300,
             )
@@ -1134,7 +1220,9 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
             configurationID=state.configurationID,
             typ=state.typ,
             name=state.name,
+            tagName=state.name,
             config=state.config,
+            pluginDto= load_plugin_dto(LoadPluginRequestDto(typ=state.typ, name=state.name, config=state.config)),
             params={"config": state.config},
         )
 
