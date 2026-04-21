@@ -679,14 +679,11 @@ class PluginDemo:
                 self._config_message(f"bgcolor {color} not allowed")
 
     def get_help(self) -> str:
-        parts = []
+        parts: List[str] = []
         for hf in self.HELPFILES or []:
-            try:
-                msg = read_resource_text(hf)
-                if msg:
-                    parts.append(msg)
-            except Exception:
-                continue
+            msg = read_resource_text(hf)
+            if msg:
+                parts.append(msg)
         help_text = "".join(parts).strip()
         if not help_text:
             help_text = "<h1>Plugin-Template</h1>Help ist noch nicht konfiguriert!"
@@ -752,14 +749,18 @@ class PluginDemo:
             feedback=""
         )
         try:
-            richtig = parse_time_seconds(correct_text)
-            eingabe = parse_time_seconds(antwort)
-            t = toleranz.toleranz if toleranz else 1e-10
-            mode = (toleranz.mode if toleranz else "RELATIV")
-            if equals_with_tolerance(richtig, eingabe, t, mode):
-                info.score = float(grade)
-                info.scoreMode = "OK"
-        except Exception:
+            richtig = parse_time_seconds(correct_text or "")
+            eingabe = parse_time_seconds(antwort or "")
+            if toleranz is not None:
+                t: float = float(toleranz.toleranz)
+                mode: str = toleranz.mode or "RELATIV"
+            else:
+                t = 1e-10
+                mode = "RELATIV"
+            if equals_with_tolerance(richtig, eingabe, t, mode  or ""):
+                info.punkteIst  = float(grade)
+                info.status  = "OK"
+        except ValueError:
             pass
         return info
 
@@ -1096,12 +1097,12 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
 
     @r.post("/gethtml", response_class=PlainTextResponse)
     def get_html(req: PluginRequestDto):
-        pi = create_plugin(req.typ, req.name, req.config)
-        return "" if not pi else pi.get_html(req.params, req.q)
+        pi = create_plugin(req.typ or "", req.name or "", req.config or "")
+        return "" if not pi else pi.get_html(req.params or "", req.q)
 
     @r.post("/angabe", response_class=PlainTextResponse)
     def get_angabe(req: PluginRequestDto):
-        pi = create_plugin(req.typ, req.name, req.config)
+        pi = create_plugin(req.typ or "", req.name or "", req.config or "")
         return "" if not pi else pi.get_angabe()
 
     @r.post("/generatedatasets", response_model=PluginDatasetListDto)
@@ -1114,8 +1115,8 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
 
     @r.post("/image", response_model=ImageBase64Dto)
     def image(req: PluginRequestDto):
-        pi = create_plugin(req.typ, req.name, req.config)
-        return ImageBase64Dto(error="unknown plugin") if not pi else pi.get_image_base64(req.params, req.q)
+        pi = create_plugin(req.typ or "", req.name or "", req.config or "")
+        return ImageBase64Dto(error="unknown plugin") if not pi else pi.get_image_base64(req.params or "", req.q)
 
     @r.post("/imagetemplates")
     def image_templates(req: PluginRequestDto):
@@ -1133,10 +1134,10 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
 
     @r.post("/score", response_model=PluginScoreInfoDto)
     def score(req: PluginScoreRequestDto):
-        pi = create_plugin(req.typ, req.name, req.config)
+        pi = create_plugin(req.typ or "", req.name or "", req.config or "")
         if not pi:
             return PluginScoreInfoDto()
-        return pi.score(req.antwort, req.toleranz, req.answerDto, req.grade)
+        return pi.score(req.antwort or "", req.toleranz, req.answerDto, req.grade)
 
     @r.post("/getvars")
     def get_vars(req: PluginRequestDto):
@@ -1157,13 +1158,13 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
 
     @r.post("/loadplugindto", response_model=PluginDto)
     def load_plugin_dto(req: LoadPluginRequestDto):
-        pi = create_plugin(req.typ, req.name, req.config)
+        pi = create_plugin(req.typ or "", req.name or "", req.config or "")
         if not pi:
             return PluginDto()
         # Mimic Java PluginDto constructor behavior: embed image (base64) as data url
-        img = pi.get_image_base64(req.params, req.q)
+        img = pi.get_image_base64(req.params or "", req.q)
         tag_name = f"{(req.q.id if req.q else 0)}_{req.name}_{req.nr}"
-        return PluginDto(tagName=tag_name, imageUrl="data:image/png;base64," + img.base64Image, width=CONF_width, height=CONF_height)
+        return PluginDto(tagName=tag_name or "", imageUrl="data:image/png;base64," + (img.base64Image or ""), width=CONF_width, height=CONF_height)
 
     @r.post("/renderlatex", response_model=PluginRenderDto)
     def render_latex(req: PluginRenderLatexRequestDto):
@@ -1173,7 +1174,7 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
     @r.post("/renderpluginresult", response_model=PluginRenderDto)
     def render_plugin_result(req: PluginRenderResultRequestDto):
         # BasePlugin default: returns html showing image + input; we provide minimal html.
-        pi = create_plugin(req.typ, req.name, req.config)
+        pi = create_plugin(req.typ or "", req.name or "", req.config or "")
         if not pi:
             return PluginRenderDto(source="")
         if req.tex:
@@ -1193,7 +1194,7 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
     # Die configurationID wird also als Authentifizierung an den Open-Endpoints verwendet.<br>
     @r.post("/configurationinfo", response_model=PluginConfigurationInfoDto)
     def configuration_info(req: PluginConfigurationInfoRequestDto):
-        pi = create_plugin(req.typ, req.name, req.config)
+        pi = create_plugin(req.typ or "", req.name or "", req.config or "")
         if not pi:
             return PluginConfigurationInfoDto(
                 configurationID=req.configurationID or "",
@@ -1249,10 +1250,10 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
 
         updated_state.pluginConfigDto.pluginDto = load_plugin_dto(
             LoadPluginRequestDto(
-                typ=updated_state.typ,
-                name=updated_state.name,
-                config=updated_state.config,
-                q=updated_state.questionDto,
+                typ=updated_state.typ or "",
+                name=updated_state.name or "",
+                config=updated_state.config or "",
+                q=updated_state.questionDto or None,
                 configurationID=updated_state.configurationID,
             )
         )
@@ -1289,7 +1290,7 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
         tag_name = f"{(effective_question.id if effective_question else 0)}_{effective_name}_{req.nr or 0}"
 
         return PluginDto(
-            tagName=tag_name,
+            tagName=tag_name or "",
             imageUrl="data:image/png;base64," + (img.base64Image or ""),
             width=CONF_width,
             height=CONF_height,
@@ -1305,8 +1306,9 @@ def ping():
     return "pong"
 
 
-@app.get(f"{SERVICEPATH}{PING}", response_class=PlainTextResponse)
-def ping_servicepath():
+PING_SERVICEPATH: str = f"{SERVICEPATH}{PING}"
+@app.get(PING_SERVICEPATH, response_class=PlainTextResponse)
+def ping_servicepath() -> str:
     return "pong"
 
 
@@ -1360,12 +1362,12 @@ def extern_generalinfo(plugintyp: str = Body(..., embed=False)):
 @extern_router.post("/reloadplugindto", response_model=PluginDto)
 def extern_reload(req: LoadPluginRequestDto):
     # Use the /open implementation semantics
-    pi = create_plugin(req.typ, req.name, req.config)
+    pi = create_plugin(req.typ or "", req.name or "", req.config or "")
     if not pi:
         return PluginDto()
-    img = pi.get_image_base64(req.params, req.q)
+    img = pi.get_image_base64(req.params or "", req.q)
     tag_name = f"{(req.q.id if req.q else 0)}_{req.name}_{req.nr}"
-    return PluginDto(tagName=tag_name, imageUrl="data:image/png;base64," + img.base64Image, width=CONF_width, height=CONF_height)
+    return PluginDto(tagName=tag_name or "", imageUrl="data:image/png;base64," + (img.base64Image or ""), width=CONF_width, height=CONF_height)
 
 
 app.include_router(extern_router)
