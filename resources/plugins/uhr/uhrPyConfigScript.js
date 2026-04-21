@@ -205,7 +205,7 @@ function configPluginUhrPy(dtoString) {
                     try {
                         if (data.tagName != null) {
                             let pluginDto = data;
-                            initPluginUhr(JSON.stringify(pluginDto),true);
+                            initPluginUhrPy(JSON.stringify(pluginDto),true);
                         }
                     } catch (error) {
                     }

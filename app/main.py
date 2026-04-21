@@ -50,9 +50,9 @@ CONF_helpUrl=""
 # Gibt an ob die Standard-Plugin-Configuration verwendet werden soll
 CONF_defaultPluginConfig = False
 # Breite des zu erzeugenden Bildes
-CONF_width = 400
+CONF_width = 500
 # Höhe des zu erzeugenden Bildes
-CONF_height = 400
+CONF_height = 500
 # Größe des Bildes in Prozent
 CONF_imageWidthProzent = 100
 # True wenn das Plugin CalcErgebnis und VarHash als JSON verarbeiten kann
@@ -356,6 +356,15 @@ class VarHashDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     vars: Optional[Dict[str, VarDto]] = Field(default_factory=dict)
 
+    def to_java_string(self) -> str:
+        parts = []
+        if self.calcErgebnisDto is not None:
+            parts.append(f"calcErgebnisDto={self.calcErgebnisDto}")
+        if self.ze is not None:
+            parts.append(f"ze={self.ze}")
+        if self.cp is not None:
+            parts.append(f"cp={self.cp}")
+        return ",".join(parts)
 
 class PluginSubQuestionDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -436,8 +445,8 @@ class PluginDto(BaseModel):
     pig: bool = False                 # True wenn das Plugin über ein PIG-Tag direkt in der Frage eingebunden ist
     result: bool = False              # True wenn Plugin in einer Subquestion definiert ist
     tagName: Optional[str] = ""       # Eindeutiger Bezeichner des PluginTags
-    width: int = 500                  # Breite des Plugin-Bereiches in Pixel
-    height: int = 500                 # Höhe des Plugin-Bereiches in Pixel
+    width: int = CONF_width           # Breite des Plugin-Bereiches in Pixel
+    height: int = CONF_height          # Höhe des Plugin-Bereiches in Pixel
     params: Optional[Dict[str, str]] = Field(default_factory=dict)   # Parameter welche vom Plugin an Javascript weitergegeben werden sollen, wird von LeTTo nicht verwendet
     jsonData: Optional[str] = None    # JSON-String welcher vom Plugin an Javascript weitergegeben werden soll, wird von LeTTo nicht verwendet
 
@@ -559,8 +568,8 @@ class PluginConfigDto(BaseModel):
     name: Optional[str] = ""                                       # Name des Plugins im Dialog
     config: Optional[str] = ""                                     # Konfigurationsstring
     tagName: Optional[str] = "plugintag"                           # Eindeutiger Bezeichner des PluginTags
-    width: int = 500                                               # Breite des Plugin-Bereiches in Pixel
-    height: int = 500                                              # Höhe des Plugin-Bereiches in Pixel
+    width: int = CONF_width                                        # Breite des Plugin-Bereiches in Pixel
+    height: int = CONF_height                                      # Höhe des Plugin-Bereiches in Pixel
     configurationID: Optional[str] = ""                            # Configuration-ID
     errorMsg: Optional[str] = None                                 # Fehlermeldung wenn das DTO nicht korrekt erzeugt wurde
     pluginDto: Optional[PluginDto] = None                          # PluginDto für die Initialisierung des Plugins
@@ -669,12 +678,27 @@ class PluginDemo:
             else:
                 self._config_message(f"bgcolor {color} not allowed")
 
+    def get_help(self) -> str:
+        parts = []
+        for hf in self.HELPFILES or []:
+            try:
+                msg = read_resource_text(hf)
+                if msg:
+                    parts.append(msg)
+            except Exception:
+                continue
+        help_text = "".join(parts).strip()
+        if not help_text:
+            help_text = "<h1>Plugin-Template</h1>Help ist noch nicht konfiguriert!"
+        return help_text
+
     def plugin_general_info(self, typ: str) -> PluginGeneralInfo:
         # local JS libs are embedded as content in javascriptLibrariesLocal
         libs_local = []
         for lib in self.JSLIBS:
             libs_local.append(JavascriptLibrary(name=lib, local="JAVASCRIPT", js_code=read_resource_text(lib)))
-        help_text = read_resource_text(self.HELPFILES[0])
+        # help_text = read_resource_text(self.HELPFILES[0])
+        help_text = self.get_help()
         return PluginGeneralInfo(
             typ=typ,
             version=self.VERSION,
@@ -961,14 +985,7 @@ def create_or_update_configuration_state(
     cleanup_configuration_states()
 
     state = CONFIG_STATES.get(configuration_id)
-    plugin_Config_dto = PluginConfigDto(
-        typ=typ,
-        name=name,
-        config=config,
-        tagName="name",
-        pluginDto=PluginDto(),
-        params={"config": config},
-    )
+
     if state is None:
         state = PluginConfigurationState(
             configurationID=configuration_id,
@@ -976,13 +993,10 @@ def create_or_update_configuration_state(
             name=name or "",
             config=config or "",
             pluginDemo = plugin_Demo,
-            pluginConfigDto=plugin_Config_dto,
             timeout=timeout,
             lastAccessTime=int(time.time()),
         )
         CONFIG_STATES[configuration_id] = state
-        return state
-
     if typ is not None:
         state.typ = typ or state.typ
     if name is not None:
@@ -991,9 +1005,33 @@ def create_or_update_configuration_state(
         state.config = config
     if plugin_Demo is not None:
         state.pluginDemo = plugin_Demo
-        state.pluginConfigurationInfoDto=PluginConfigurationInfoDto(
+    if question_dto is not None:
+        state.questionDto = question_dto
+    if timeout:
+        state.timeout = timeout
+
+    if state.pluginConfigDto is None:
+        state.pluginConfigDto = PluginConfigDto()
+
+    state.pluginConfigDto.configurationID = configuration_id
+    state.pluginConfigDto.typ = state.typ
+    state.pluginConfigDto.name = state.name
+    state.pluginConfigDto.config = state.config
+    state.pluginConfigDto.tagName = state.name or "plugintag"
+    state.pluginConfigDto.pluginDtoUri = LETTO_PLUGIN_URI_EXTERN + EXTERN_OPEN + "/reloadplugindto"
+    state.pluginConfigDto.pluginDtoToken = ""
+
+    if state.pluginConfigDto.params is None:
+        state.pluginConfigDto.params = {}
+
+    state.pluginConfigDto.params["config"] = state.config
+
+    if state.pluginDemo is not None:
+        state.pluginConfigDto.params["help"] = state.pluginDemo.get_help()
+
+        state.pluginConfigurationInfoDto = PluginConfigurationInfoDto(
             configurationID=configuration_id,
-            configurationMode=plugin_Demo.configurationMode,
+            configurationMode=state.pluginDemo.configurationMode,
             useQuestion=CONF_useQuestion,
             useVars=CONF_useVars,
             useCVars=CONF_useCVars,
@@ -1003,13 +1041,16 @@ def create_or_update_configuration_state(
             calcMaxima=CONF_calcMaxima,
             externUrl=CONF_externUrl,
             javaScriptMethode="configPlugin",
-            configurationUrl="",
+            configurationUrl=LETTO_PLUGIN_URI_EXTERN or "",
         )
-    if question_dto is not None:
-        state.questionDto = question_dto
-    if timeout:
-        state.timeout = timeout
-    state.pluginConfigDto=plugin_Config_dto
+
+    if state.questionDto is not None:
+        state.pluginConfigDto.params["vars"] = (
+            state.questionDto.vars.to_java_string()
+            if state.questionDto.vars is not None
+            else "null"
+        )
+
     state.touch()
     return state
 
@@ -1079,7 +1120,7 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
     @r.post("/imagetemplates")
     def image_templates(req: PluginRequestDto):
         # PluginUhr.getImageTemplates returns Vector<String[]>
-        return [["default", "320x320"]]
+        return [["default", "[PIG PluginVomTester \"\"]","Uhrblatt"]]
 
     @r.post("/parserplugin", response_model=CalcErgebnisDto)
     def parser_plugin(req: PluginParserRequestDto):
@@ -1122,7 +1163,7 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
         # Mimic Java PluginDto constructor behavior: embed image (base64) as data url
         img = pi.get_image_base64(req.params, req.q)
         tag_name = f"{(req.q.id if req.q else 0)}_{req.name}_{req.nr}"
-        return PluginDto(tagName=tag_name, imageUrl="data:image/png;base64," + img.base64Image, width=360, height=360)
+        return PluginDto(tagName=tag_name, imageUrl="data:image/png;base64," + img.base64Image, width=CONF_width, height=CONF_height)
 
     @r.post("/renderlatex", response_model=PluginRenderDto)
     def render_latex(req: PluginRenderLatexRequestDto):
@@ -1196,23 +1237,27 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
                 errorMsg="configurationID unknown or expired",
             )
 
-        if req.typ:
-            state.typ = req.typ
-        if req.configuration is not None:
-            state.config = req.configuration
-        if req.questionDto is not None:
-            state.questionDto = req.questionDto
-        state.touch()
-
-        return PluginConfigDto(
-            configurationID=state.configurationID,
-            typ=state.typ,
+        updated_state = create_or_update_configuration_state(
+            configuration_id=state.configurationID,
+            typ=req.typ or state.typ,
             name=state.name,
-            tagName=state.name,
-            config=state.config,
-            pluginDto= load_plugin_dto(LoadPluginRequestDto(typ=state.typ, name=state.name, config=state.config)),
-            params={"config": state.config},
+            config=req.configuration if req.configuration is not None else state.config,
+            plugin_Demo=state.pluginDemo,
+            question_dto=req.questionDto if req.questionDto is not None else state.questionDto,
+            timeout=state.timeout,
         )
+
+        updated_state.pluginConfigDto.pluginDto = load_plugin_dto(
+            LoadPluginRequestDto(
+                typ=updated_state.typ,
+                name=updated_state.name,
+                config=updated_state.config,
+                q=updated_state.questionDto,
+                configurationID=updated_state.configurationID,
+            )
+        )
+
+        return updated_state.pluginConfigDto
 
     @r.post("/getconfiguration", response_class=PlainTextResponse)
     def get_configuration(req: PluginConfigurationRequestDto):
@@ -1246,8 +1291,8 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
         return PluginDto(
             tagName=tag_name,
             imageUrl="data:image/png;base64," + (img.base64Image or ""),
-            width=360,
-            height=360,
+            width=CONF_width,
+            height=CONF_height,
             params={"config": effective_config},
         )
 
@@ -1293,7 +1338,6 @@ app.include_router(mount_internal_open(f"{SERVICEPATH}/open"))
 # External open controller forwards to internal reload/pluginlist etc in Java; we expose the same subset
 extern_router = APIRouter(prefix=EXTERN_OPEN)
 
-
 @extern_router.get("/pluginlist")
 def extern_pluginlist():
     return list(REGISTERED_PLUGINS.keys())
@@ -1321,7 +1365,7 @@ def extern_reload(req: LoadPluginRequestDto):
         return PluginDto()
     img = pi.get_image_base64(req.params, req.q)
     tag_name = f"{(req.q.id if req.q else 0)}_{req.name}_{req.nr}"
-    return PluginDto(tagName=tag_name, imageUrl="data:image/png;base64," + img.base64Image, width=360, height=360)
+    return PluginDto(tagName=tag_name, imageUrl="data:image/png;base64," + img.base64Image, width=CONF_width, height=CONF_height)
 
 
 app.include_router(extern_router)
