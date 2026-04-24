@@ -1,6 +1,6 @@
 FROM python:3.12-slim
-LABEL maintainer="letto.at"
-LABEL description="Demo-Plugin-Python"
+LABEL maintainer="Klaus Stocker"
+LABEL description="Plugin-Python"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

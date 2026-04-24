@@ -29,11 +29,11 @@ CONF_APPLICATION_NAME = "pluginpython"
 # Name des Services wie es am Setup registriert wird
 CONF_PLUGIN_NAME = "letto-pluginpython"
 # Author des Plugins
-CONF_PLUGIN_AUTHOR = "LeTTo GmbH"
+CONF_PLUGIN_AUTHOR = "Klaus Stocker"
 # Lizenz des Plugins
 CONF_PLUGIN_LICENSE = "OpenSource"
 # Name des Plugins wie es in Letto erscheint
-CONF_PLUGIN = "UhrPy"
+CONF_PLUGIN = "Python"
 # Version des Plugins
 CONF_VERSION = "1.0"
 # Java-Script function für die Initialisierung des Plugins wenn es im Java-Script modus laufen sollte

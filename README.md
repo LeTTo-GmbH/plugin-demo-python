@@ -1,7 +1,6 @@
-# plugin-python (Port von plugin-java)
+# plugin-python 
 
-Dieses Projekt ist eine Python/FastAPI-Portierung der REST-API aus `plugin-java`.
-Der Fokus liegt auf denselben Endpoints + dem Demo-Plugin **Uhr1**.
+
 
 ## Build des Docker-Containers (build.bat)
 ```bash
