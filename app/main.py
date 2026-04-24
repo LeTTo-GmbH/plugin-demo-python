@@ -810,7 +810,7 @@ class PluginDemo:
 # Plugin registry (like StartupConfiguration.registerPlugin)
 # --------------------------
 REGISTERED_PLUGINS: Dict[str, str] = {
-    CONF_PLUGIN: "Plugin-Demo Python",
+    CONF_PLUGIN: "Plugin Python",
 }
 
 def create_plugin(typ: str, name: str, params: str) -> Optional[PluginDemo]:
@@ -1112,7 +1112,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="LeTTo Plugin Demo (Python)",
+    title="LeTTo Plugin Python",
     version=CONF_VERSION,
     lifespan=lifespan,
 )
