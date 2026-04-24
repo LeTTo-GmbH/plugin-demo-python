@@ -82,7 +82,7 @@ function configPluginUhrPy(dtoString) {
             <div class="${plugin.configContainer}" >
                 <div class="configpane" id="leftPane">
                     <!-- Konfigurationsbereich -->
-                    <h1>Uhr-Plugin</h1>  
+                    <h1>Python-Plugin</h1>  
                     <input type="text" id="data1" value="${plugin.config}"/>   
                     <button id="sendbutton">OK</button> <br>
                     vars: <input typ="text" value="${dto.params['vars']}" size="40" readonly/><br>

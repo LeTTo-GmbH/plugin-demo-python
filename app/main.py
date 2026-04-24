@@ -22,18 +22,18 @@ from dataclasses import dataclass
 # --------------------------
 # CONFIGURATION
 # --------------------------
-# Der Servicepath muss in der nginx-Konfiguration auf den Docker-Container des Plugins gesetzt werden -> siehe proxy/plugindemopython.conf
-CONF_STANDARD_SERVICEPATH = "/plugindemopython"
+# Der Servicepath muss in der nginx-Konfiguration auf den Docker-Container des Plugins gesetzt werden -> siehe proxy/pluginpython.conf
+CONF_STANDARD_SERVICEPATH = "/pluginpython"
 # Name des Plugin-Service
-CONF_APPLICATION_NAME = "plugindemopython"
+CONF_APPLICATION_NAME = "pluginpython"
 # Name des Services wie es am Setup registriert wird
-CONF_PLUGIN_NAME = "letto-plugindemopython"
+CONF_PLUGIN_NAME = "letto-pluginpython"
 # Author des Plugins
-CONF_PLUGIN_AUTHOR = "LeTTo GmbH"
+CONF_PLUGIN_AUTHOR = "Klaus Stocker"
 # Lizenz des Plugins
 CONF_PLUGIN_LICENSE = "OpenSource"
 # Name des Plugins wie es in Letto erscheint
-CONF_PLUGIN = "UhrPy"
+CONF_PLUGIN = "Python"
 # Version des Plugins
 CONF_VERSION = "1.0"
 # Java-Script function für die Initialisierung des Plugins wenn es im Java-Script modus laufen sollte
@@ -98,12 +98,12 @@ LETTO_SETUP_URI = os.getenv("letto_setup_uri", os.getenv("LETTO_SETUP_URI", "htt
     "/")
 LETTO_SETUP_USER = "user"
 LETTO_SETUP_PASSWORD = os.getenv("letto_user_user_password", os.getenv("LETTO_USER_USER_PASSWORD", ""))
-PLUGIN_ENDPOINT_NAME = os.getenv("PLUGIN_ENDPOINT_NAME", "plugindemo")
+PLUGIN_ENDPOINT_NAME = os.getenv("PLUGIN_ENDPOINT_NAME", "pluginpython")
 PLUGIN_REGISTER_ON_READY = os.getenv("PLUGIN_REGISTER_ON_READY", "true").lower() == "true"
 PLUGIN_REGISTER_RETRIES = int(os.getenv("PLUGIN_REGISTER_RETRIES", "30"))
 PLUGIN_REGISTER_DELAY_SECONDS = float(os.getenv("PLUGIN_REGISTER_DELAY_SECONDS", "1.0"))
-NW_LETTO_ADDRESS = os.getenv("network_letto_address", os.getenv("NETWORK_LETTO_ADDRESS", "letto-plugindemopython"))
-DOCKER_CONTAINER_NAME = os.getenv("docker_container_name", os.getenv("DOCKER_CONTAINER_NAME", "letto-plugindemopython"))
+NW_LETTO_ADDRESS = os.getenv("network_letto_address", os.getenv("NETWORK_LETTO_ADDRESS", "letto-pluginpython"))
+DOCKER_CONTAINER_NAME = os.getenv("docker_container_name", os.getenv("DOCKER_CONTAINER_NAME", "letto-pluginpython"))
 LETTO_PLUGIN_URI_INTERN = os.getenv("letto_plugin_uri_intern",
                                     os.getenv("LETTO_PLUGIN_URI_INTERN", f"http://{NW_LETTO_ADDRESS}.nw-letto:8080"))
 LETTO_PLUGIN_URI_EXTERN = os.getenv("letto_plugin_uri_extern", os.getenv("LETTO_PLUGIN_URI_EXTERN", ""))
@@ -810,7 +810,7 @@ class PluginDemo:
 # Plugin registry (like StartupConfiguration.registerPlugin)
 # --------------------------
 REGISTERED_PLUGINS: Dict[str, str] = {
-    CONF_PLUGIN: "Plugin-Demo Python",
+    CONF_PLUGIN: "Plugin Python",
 }
 
 def create_plugin(typ: str, name: str, params: str) -> Optional[PluginDemo]:
@@ -1112,7 +1112,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="LeTTo Plugin Demo (Python)",
+    title="LeTTo Plugin Python",
     version=CONF_VERSION,
     lifespan=lifespan,
 )
@@ -1362,11 +1362,11 @@ def ping_open():
 @app.get(INFO, response_model=ServiceInfoDTO)
 def info():
     return ServiceInfoDTO(
-        serviceName="plugindemo",
+        serviceName="pluginpython",
         version="python",
         author="LeTTo",
         starttime=datetime.now().isoformat(),
-        adminInfoDto=AdminInfoDto(applicationname="plugindemo"),
+        adminInfoDto=AdminInfoDto(applicationname="pluginpython"),
     )
 
 
@@ -1378,7 +1378,7 @@ def info_open():
 def version():
     return CONF_VERSION
 
-# Mount internal open API at /open and (for proxy setups) also under /plugindemo/open
+# Mount internal open API at /open and (for proxy setups) also under /pluginpython/open
 app.include_router(mount_internal_open(LOCAL_API))
 app.include_router(mount_internal_open(f"{SERVICEPATH}/open"))
 
