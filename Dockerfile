@@ -5,7 +5,7 @@ LABEL description="Demo-Plugin-Python"
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8080 \
-    SERVICEPATH=/plugindemo \
+    SERVICEPATH=/pluginpython \
     RESOURCE_DIR=/app/resources
 
 WORKDIR /app
