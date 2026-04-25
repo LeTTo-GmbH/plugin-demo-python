@@ -50,10 +50,14 @@ services:
       debug: ${DEBUG_PLUGINS:-${DEBUG:-false}}
       
   jobe:
-    image: trampgeek/jobeinabox:latest
-    container_name: jobe
+    build:
+      context: ..
+      dockerfile: jobe/Dockerfile
+    image: lettohub/letto-plugin-python-jobe:latest
+    container_name: letto-jobe
+    hostname: letto-jobe
     restart: always
     ports:
       - "4000:80"
     networks:
-      - backnet
+      - nw-letto
