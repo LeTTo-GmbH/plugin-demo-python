@@ -14,6 +14,7 @@ LABEL \
 
 ARG TZ=Pacific/Auckland
 ARG JOBE_VERSION=master
+ARG API_KEYS=""
 # Set up the (apache) environment variables
 ENV APACHE_RUN_USER=www-data
 ENV APACHE_RUN_GROUP=www-data
@@ -23,9 +24,7 @@ ENV APACHE_PID_FILE=/var/run/apache2.pid
 ENV LANG=C.UTF-8
 
 # Copy apache virtual host file for later use
-COPY 000-jobe.conf /
-# Copy test script
-COPY container-test.sh /
+COPY jobe/000-jobe.conf /
 
 # Mount secrets
 # Set timezone
@@ -37,9 +36,7 @@ COPY container-test.sh /
 # Handle jobe API keys
 # Install jobe
 # Clean up
-RUN --mount=type=secret,id=api_keys \
-    export API_KEYS=`cat /run/secrets/api_keys | tr '\n' ' '` && \
-    ln -snf /usr/share/zoneinfo/"$TZ" /etc/localtime && \
+RUN ln -snf /usr/share/zoneinfo/"$TZ" /etc/localtime && \
     echo "$TZ" > /etc/timezone && \
     apt-get update && \
     apt-get --no-install-recommends install -yq \
@@ -80,7 +77,7 @@ RUN --mount=type=secret,id=api_keys \
     git clone --single-branch --branch ${JOBE_VERSION} https://github.com/trampgeek/jobe.git /var/www/html/jobe && \
     apache2ctl start && \
     cd /var/www/html/jobe && \
-    if [ ! -z "${API_KEYS}" ]; then \
+    if [ -n "${API_KEYS}" ]; then \
         sed -i 's/$require_api_keys = false/$require_api_keys = true/' /var/www/html/jobe/app/Config/Jobe.php && \
         sed -i "s/'2AAA7A.*/$API_KEYS/" /var/www/html/jobe/app/Config/Jobe.php \
     ; fi && \
