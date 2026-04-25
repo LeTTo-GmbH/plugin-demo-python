@@ -48,3 +48,12 @@ services:
       letto_webPathImages: ${SERVER_NAME}/images
       letto_webPathPlugins: ${SERVER_NAME}/images/plugins
       debug: ${DEBUG_PLUGINS:-${DEBUG:-false}}
+      
+  jobe:
+    image: trampgeek/jobeinabox:latest
+    container_name: jobe
+    restart: always
+    ports:
+      - "4000:80"
+    networks:
+      - backnet
