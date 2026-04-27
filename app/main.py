@@ -128,6 +128,16 @@ logging.basicConfig(level=logging.INFO)
 
 _registration_task = None
 
+IGNORE_PATHS = [
+    "/open/pluginlist",
+    "/version",
+    "/ping"
+]
+
+class HealthcheckFilter(logging.Filter):
+    def filter(self, record):
+        msg = record.getMessage()
+        return not any(p in msg for p in IGNORE_PATHS)
 
 # --------------------------
 # Utilities
@@ -349,20 +359,33 @@ class VarDto(BaseModel):
     ze: Optional[str] = None
     cp: Optional[CalcParamsDto] = None
 
-
-class VarHashDto(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    vars: Optional[Dict[str, VarDto]] = Field(default_factory=dict)
-
     def to_java_string(self) -> str:
-        parts = []
+        parts: List[str] = []
+
         if self.calcErgebnisDto is not None:
             parts.append(f"calcErgebnisDto={self.calcErgebnisDto}")
         if self.ze is not None:
             parts.append(f"ze={self.ze}")
         if self.cp is not None:
             parts.append(f"cp={self.cp}")
+
         return ",".join(parts)
+
+
+class VarHashDto(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    vars: Optional[Dict[str, VarDto]] = Field(default_factory=dict)
+
+    def to_java_string(self) -> str:
+        if not self.vars:
+            return ""
+
+        parts: List[str] = []
+        for name, var_dto in self.vars.items():
+            parts.append(f"{name}={var_dto.to_java_string() if var_dto else 'null'}")
+
+        return ",".join(parts)
+
 
 class PluginSubQuestionDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
