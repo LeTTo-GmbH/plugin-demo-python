@@ -297,7 +297,7 @@ class PluginGeneralInfo(BaseModel):
     javaScript: bool = True
     javascriptLibraries: Optional[List[JavascriptLibrary]] = Field(default_factory=list)
     javascriptLibrariesLocal: Optional[List[JavascriptLibrary]] = Field(default_factory=list)
-    inputElement: Optional[str] = "TextField"
+    inputElement: Optional[str] = "JAVASCRIPT"
     cacheable: bool = True
     useVars: bool = True
     useCVars: bool = True
