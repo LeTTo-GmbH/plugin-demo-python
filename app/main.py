@@ -259,8 +259,8 @@ def draw_clock_png(hh: int, mm: int, size: int = 320, bgcolor: str = "white") ->
         y = cy - int(length * math.sin(angle))
         d.line((cx, cy, x, y), fill=(0, 0, 0, 255), width=width)
 
-    hand(hour_ang, r * 0.55, max(5, size // 60))
-    hand(minute_ang, r * 0.80, max(4, size // 80))
+    # -hand(hour_ang, r * 0.55, max(5, size // 60))
+    # -hand(minute_ang, r * 0.80, max(4, size // 80))
     d.ellipse((cx - 6, cy - 6, cx + 6, cy + 6), fill=(0, 0, 0, 255))
 
     buf = io.BytesIO()
@@ -744,8 +744,8 @@ class PluginDemo:
 
     def get_image_base64(self, params: str, q: Optional[PluginQuestionDto]) -> ImageBase64Dto:
         # determine a "correct" time from q.vars if present, else use current system time (HH:MM)
-        hh = datetime.now().hour
-        mm = datetime.now().minute
+        hh = 1
+        mm = 30
         # allow override in params: time=HH:MM
         m = re.search(r"time\s*=\s*([0-9]{1,2}:[0-9]{1,2})", params or "")
         if m:

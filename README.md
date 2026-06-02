@@ -15,7 +15,17 @@ docker build -t letto-plugin-demopython:latest -f Dockerfile .
 * Proxy Konfiguration:
   * kopiere proxy/plugindemopython.conf in /opt/letto/docker/proxy/ am LeTTo-Server 
   * restarte den Proxy (docker restart letto-proxy)
-* d
+
+## Debugging aus der PyCharm starten
+* In der .env Datei die Zeile `DEBUG=true` aktivieren
+* Run -> Edit Configurations -> Add New Configuration -> Attach to DAP
+  * Name: UhrPy Docker debug
+  * Remote address: localhost:5209
+  * Local Root Path: c:/github/plugin-demo-python/app
+  * Remote Root Path: /app/app
+  * ![img.png](img.png)
+* Immer zuerst den Container neu starten (docker restart letto-plugindemopython), damit die Debug-Optionen wirksam werden.
+* Dann Attach to DAP starten.
 
 ## Wichtige Endpoints
 - `GET /ping`  → `pong`

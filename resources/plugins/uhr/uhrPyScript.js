@@ -114,20 +114,21 @@ function initPluginUhrPy(dtoString, active) {
          */
         function drawClockwithLineFromAngle(angle, anglecursor) {
             ctx.clearRect(0,0, width, height);
-            if (img.loadComplete) {
+            /*if (img.loadComplete) {
                 ctx.drawImage(img, 0, 0, width, height);
                 draw(angle,anglecursor);
                 return;
             }
-            /*img.src = localMode ?
-                "https://i.pinimg.com/originals/5b/68/be/5b68bede64bad2affa5c4b98f330f0ef.jpg" :
-                "https://" + window.location.host + "/letto/javax.faces.resource/uhr.gif.jsf?ln=bitmaps";*/
             img.src = imagepath;
             img.onload = function(){
                 img.loadComplete=true;
                 ctx.drawImage(img, 0, 0, width, height);
                 draw(angle,anglecursor);
-            }
+            }*/
+            img.src = imagepath;
+            img.complete=true;
+            ctx.drawImage(img, 0, 0, width, height);
+            draw(angle,anglecursor);
         }
         /**
          * Zeichnen des Zeigers der Uhr in einem bestimmten Winkel
