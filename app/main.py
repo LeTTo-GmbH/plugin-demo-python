@@ -1121,6 +1121,35 @@ app = FastAPI(
 )
 
 
+def reload_plugin_dto(req: LoadPluginRequestDto):
+    effective_typ = req.typ or ""
+    effective_name = req.name or ""
+    effective_config = req.config or ""
+    effective_question = req.q
+
+    if req.configurationID:
+        state = get_configuration_state(req.configurationID)
+        if state is not None:
+            effective_typ = state.typ or effective_typ
+            effective_name = state.name or effective_name
+            effective_config = state.config or effective_config
+            effective_question = state.questionDto or effective_question
+
+    pi = create_plugin(effective_typ, effective_name, effective_config)
+    if not pi:
+        return PluginDto()
+
+    img = pi.get_image_base64("", effective_question)
+    tag_name = f"{(effective_question.id if effective_question else 0)}_{effective_name}_{req.nr or 0}"
+
+    return PluginDto(
+        tagName=tag_name or "",
+        imageUrl="data:image/png;base64," + (img.base64Image or ""),
+        width=CONF_width,
+        height=CONF_height,
+        params={"config": effective_config},
+    )
+
 def mount_internal_open(router_prefix: str) -> APIRouter:
     r = APIRouter(prefix=router_prefix)
 
@@ -1313,34 +1342,8 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
         return state.config or ""
 
     @r.post("/reloadplugindto", response_model=PluginDto)
-    def reload_plugin_dto(req: LoadPluginRequestDto):
-        effective_typ = req.typ or ""
-        effective_name = req.name or ""
-        effective_config = req.config or ""
-        effective_question = req.q
-
-        if req.configurationID:
-            state = get_configuration_state(req.configurationID)
-            if state is not None:
-                effective_typ = state.typ or effective_typ
-                effective_name = state.name or effective_name
-                effective_config = state.config or effective_config
-                effective_question = state.questionDto or effective_question
-
-        pi = create_plugin(effective_typ, effective_name, effective_config)
-        if not pi:
-            return PluginDto()
-
-        img = pi.get_image_base64("", effective_question)
-        tag_name = f"{(effective_question.id if effective_question else 0)}_{effective_name}_{req.nr or 0}"
-
-        return PluginDto(
-            tagName=tag_name or "",
-            imageUrl="data:image/png;base64," + (img.base64Image or ""),
-            width=CONF_width,
-            height=CONF_height,
-            params={"config": effective_config},
-        )
+    def reload_plugin_dto_intern(req: LoadPluginRequestDto):
+        return reload_plugin_dto(req)
 
     return r
 
@@ -1409,13 +1412,6 @@ def extern_generalinfo(plugintyp: str = Body(..., embed=False)):
 
 @extern_router.post("/reloadplugindto", response_model=PluginDto)
 def extern_reload(req: LoadPluginRequestDto):
-    # Use the /open implementation semantics
-    pi = create_plugin(req.typ or "", req.name or "", req.config or "")
-    if not pi:
-        return PluginDto()
-    img = pi.get_image_base64(req.params or "", req.q)
-    tag_name = f"{(req.q.id if req.q else 0)}_{req.name}_{req.nr}"
-    return PluginDto(tagName=tag_name or "", imageUrl="data:image/png;base64," + (img.base64Image or ""), width=CONF_width, height=CONF_height)
-
+    return reload_plugin_dto(req)
 
 app.include_router(extern_router)
