@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, APIRouter, Body
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from pydantic import BaseModel, Field, ConfigDict
 from PIL import Image, ImageDraw
@@ -1134,6 +1135,8 @@ app = FastAPI(
     docs_url=f"{SERVICEPATH}/docs",
     redoc_url=f"{SERVICEPATH}/redoc",
     openapi_url=f"{SERVICEPATH}/openapi.json",
+    # Swagger UI: Endpoints innerhalb einer Gruppe alphabetisch nach Pfad (und Methode) sortieren
+    swagger_ui_parameters={"operationsSorter": "alpha", "tagsSorter": "alpha"},
 )
 
 
@@ -1431,3 +1434,23 @@ def extern_reload(req: LoadPluginRequestDto):
     return reload_plugin_dto(req)
 
 app.include_router(extern_router)
+
+
+# --------------------------
+# OpenAPI: Pfade und Schemas alphabetisch sortiert (Swagger UI, ReDoc und openapi.json)
+# --------------------------
+def sorted_openapi() -> Dict[str, Any]:
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
+    schema["paths"] = {
+        path: dict(sorted(ops.items()))
+        for path, ops in sorted(schema.get("paths", {}).items())
+    }
+    components = schema.get("components", {})
+    if "schemas" in components:
+        components["schemas"] = dict(sorted(components["schemas"].items(), key=lambda kv: kv[0].lower()))
+    app.openapi_schema = schema
+    return schema
+
+app.openapi = sorted_openapi
