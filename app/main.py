@@ -53,18 +53,8 @@ CONF_defaultPluginConfig = False
 CONF_width = 500
 # Höhe des zu erzeugenden Bildes
 CONF_height = 500
-# Größe des Bildes in Prozent
-CONF_imageWidthProzent = 100
 # True wenn das Plugin CalcErgebnis und VarHash als JSON verarbeiten kann
 CONF_math = False
-# Plugin Hilfe als HTML für den Plugin - Dialog
-CONF_helpfiles = {"plugins/plugin.html"}
-# Javascript Libraries für das Plugin
-CONF_javascriptLibs = {"plugins/plugintools.js"}
-# Name der JAVA-Script Methode zur Plugin-Initialisierung für die interaktive Ergebniseingabe
-CONF_initPluginJS = ""
-# gibt an ob das Plugin eine Java-Script Schnittstelle bei der Beispieldarstellung hat
-CONF_javaScript = False
 # Plugin ist stateless und liefert bei gleicher Angabe immer das gleiche Verhalten
 CONF_cacheable = True
 # Gibt an ob im Plugin die Frage benötigt wird
@@ -77,7 +67,7 @@ CONF_useCVars = True
 CONF_useMaximaVars = True
 # gibt an ob die Maxima-Durchrechnungen mit eingesetzten Datensätzen benötigt werden
 CONF_useMVars = True
-# Konfigurations-Mode für die Konfiguration des Plugins
+# Standard-Konfigurations-Mode des Plugins: 0..String, 1..JSF, 2..Javascript, 3..Url (änderbar über den Parameter mode=...)
 CONF_configurationMode = 2
 # Gibt an, ob im Plugin-Konfig-Dialog Datensätze hinzugefügt werden können. => Button AddDataset in Fußzeile des umgebenden Dialogs, (nicht vom Plugin)
 CONF_addDataSet = True
@@ -85,8 +75,6 @@ CONF_addDataSet = True
 CONF_externUrl = False
 # Gibt an ob im Plugin bei der Konfiguration die Maxima-Berechnung durchlaufen werden kann. => Button Maxima in Fußzeile des umgebenden Dialogs, (nicht vom Plugin)
 CONF_calcMaxima = True
-# Name der JAVA-Script Methode zur Configuration des Plugins
-CONF_configPluginJS = "configPlugin"
 # URL des Plugin-Services für die direkte Kommunikation
 CONF_pluginServiceURL = ""
 
@@ -237,7 +225,8 @@ def read_resource_text(rel_path: str) -> str:
         return f"@ERROR: resource not found: {rel_path}"
 
 
-def draw_clock_png(hh: int, mm: int, size: int = 320, bgcolor: str = "white") -> bytes:
+def draw_clock_png(size: int = 320, bgcolor: str = "white") -> bytes:
+    """Zeichnet das Uhrblatt ohne Zeiger - die Zeiger werden im Browser von uhrPyScript.js gezeichnet."""
     # Background color mapping similar to Java (white, black, red, green, blue, yellow)
     bg_map = {
         "white": (255, 255, 255, 255),
@@ -257,7 +246,7 @@ def draw_clock_png(hh: int, mm: int, size: int = 320, bgcolor: str = "white") ->
     # face fill + outline
     d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=bg, outline=(0, 0, 0, 255), width=max(2, size // 100))
 
-    # ticks + numbers
+    # Stundenstriche
     for i in range(1, 13):
         alpha = math.pi / 2 - 2 * math.pi / 12.0 * i
         x1 = cx + int(r * 0.90 * math.cos(alpha))
@@ -266,17 +255,7 @@ def draw_clock_png(hh: int, mm: int, size: int = 320, bgcolor: str = "white") ->
         y2 = cy - int(r * 1.00 * math.sin(alpha))
         d.line((x1, y1, x2, y2), fill=(0, 0, 255, 255), width=max(3, size // 90))
 
-    # hands
-    minute_ang = math.pi / 2 - 2 * math.pi * (mm / 60.0)
-    hour_ang = math.pi / 2 - 2 * math.pi * ((hh % 12) / 12.0 + (mm / 720.0))
-
-    def hand(angle: float, length: float, width: int):
-        x = cx + int(length * math.cos(angle))
-        y = cy - int(length * math.sin(angle))
-        d.line((cx, cy, x, y), fill=(0, 0, 0, 255), width=width)
-
-    # -hand(hour_ang, r * 0.55, max(5, size // 60))
-    # -hand(minute_ang, r * 0.80, max(4, size // 80))
+    # Mittelpunkt
     d.ellipse((cx - 6, cy - 6, cx + 6, cy + 6), fill=(0, 0, 0, 255))
 
     buf = io.BytesIO()
@@ -684,7 +663,6 @@ class PluginDemo:
         self.name = name or ""
         self.config = params or ""
         # defaults
-        self.imageWidthProzent = 100
         self.bgcolor = "white"
         self.configMessage = ""
         # configuration modes from Java PluginConfigurationInfoDto
@@ -692,16 +670,12 @@ class PluginDemo:
         self.CONFIGMODE_JSF = 1
         self.CONFIGMODE_JAVASCRIPT = 2
         self.CONFIGMODE_URL = 3
-        self.configurationMode = self.CONFIGMODE_JAVASCRIPT
+        self.configurationMode = CONF_configurationMode
 
         # parse semicolon params like in Java
         for p in (self.config.split(";") if self.config else []):
             p = p.strip()
             if not p:
-                continue
-            m = re.match(r"^[wW](\d+)\s*$", p)
-            if m:
-                self.imageWidthProzent = max(1, min(100, int(m.group(1))))
                 continue
             key = p.replace(" ", "")
             if key == "mode=iframe":
@@ -745,33 +719,29 @@ class PluginDemo:
         libs_local = []
         for lib in self.JSLIBS:
             libs_local.append(JavascriptLibrary(name=lib, local="JAVASCRIPT", js_code=read_resource_text(lib)))
-        # help_text = read_resource_text(self.HELPFILES[0])
         help_text = self.get_help()
         return PluginGeneralInfo(
             typ=typ,
             version=self.VERSION,
-            wikiHelp="Plugins",
+            wikiHelp=CONF_wikiHelp,
+            helpUrl=CONF_helpUrl,
             help=help_text,
+            defaultPluginConfig=CONF_defaultPluginConfig,
+            math=CONF_math,
             pluginType="python.PluginDemo",
             initPluginJS=self.INIT_JS,
             javaScript=True,
-            javascriptLibrariesLocal=libs_local
+            javascriptLibrariesLocal=libs_local,
+            cacheable=CONF_cacheable,
+            useVars=CONF_useVars,
+            useCVars=CONF_useCVars,
+            useVarsMaxima=CONF_useMaximaVars,
+            useMVars=CONF_useMVars,
+            pluginServiceURL=CONF_pluginServiceURL,
         )
 
     def get_image_base64(self, params: str, q: Optional[PluginQuestionDto]) -> ImageBase64Dto:
-        # determine a "correct" time from q.vars if present, else use current system time (HH:MM)
-        hh = 1
-        mm = 30
-        # allow override in params: time=HH:MM
-        m = re.search(r"time\s*=\s*([0-9]{1,2}:[0-9]{1,2})", params or "")
-        if m:
-            try:
-                hh_s, mm_s = m.group(1).split(":")
-                hh = int(hh_s) % 24
-                mm = int(mm_s) % 60
-            except Exception:
-                pass
-        png = draw_clock_png(hh, mm, 320, bgcolor=self.bgcolor)
+        png = draw_clock_png(320, bgcolor=self.bgcolor)
         return ImageBase64Dto(base64Image=png_b64(png), imageInfoDto=ImageInfoDto(filename="", url=""), error=self.configMessage)
 
     def get_html(self, params: str, q: Optional[PluginQuestionDto]) -> str:
