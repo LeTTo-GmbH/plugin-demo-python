@@ -791,7 +791,7 @@ class PluginDemo:
             feedback=""
         )
         try:
-            if correct_erg == antwort :
+            if antwort and correct_erg == antwort:
                 info.punkteIst = float(grade)
                 info.status = "OK"
             richtig = parse_time_seconds(correct_text or "")
@@ -1132,7 +1132,11 @@ def reload_plugin_dto(req: LoadPluginRequestDto):
         if state is not None:
             effective_typ = state.typ or effective_typ
             effective_name = state.name or effective_name
-            effective_config = state.config or effective_config
+            # Die im Request mitgeschickte Konfiguration (aktuelle Eingabe im Dialog) hat Vorrang
+            if "config" in req.model_fields_set:
+                state.config = effective_config
+            else:
+                effective_config = state.config or effective_config
             effective_question = state.questionDto or effective_question
 
     pi = create_plugin(effective_typ, effective_name, effective_config)
@@ -1228,7 +1232,7 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
 
     @r.post("/updatepluginstringjavascript", response_class=PlainTextResponse)
     def update_pluginstring_javascript(req: PluginUpdateJavascriptRequestDto):
-        return req.pluginstring
+        return req.pluginDef or ""
 
     @r.post("/loadplugindto", response_model=PluginDto)
     def load_plugin_dto(req: LoadPluginRequestDto):
