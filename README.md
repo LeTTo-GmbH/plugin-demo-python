@@ -16,6 +16,13 @@ docker build -t letto-plugin-demopython:latest -f Dockerfile .
   * kopiere proxy/plugindemopython.conf in /opt/letto/docker/proxy/ am LeTTo-Server 
   * restarte den Proxy (docker restart letto-proxy)
 
+## Tests
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+Die Tests liegen in `tests/` und laufen ohne Docker und ohne LeTTo-Setup.
+
 ## Debugging aus der PyCharm starten
 * In der .env Datei die Zeile `DEBUG=true` aktivieren
 * Run -> Edit Configurations -> Add New Configuration -> Attach to DAP

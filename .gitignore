@@ -6,3 +6,4 @@
 /tmp/
 /out/
 /target/
+/.pytest_cache/
