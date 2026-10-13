@@ -101,6 +101,7 @@ PLUGIN_ENDPOINT_NAME = os.getenv("PLUGIN_ENDPOINT_NAME", "plugindemo")
 PLUGIN_REGISTER_ON_READY = os.getenv("PLUGIN_REGISTER_ON_READY", "true").lower() == "true"
 PLUGIN_REGISTER_RETRIES = int(os.getenv("PLUGIN_REGISTER_RETRIES", "30"))
 PLUGIN_REGISTER_DELAY_SECONDS = float(os.getenv("PLUGIN_REGISTER_DELAY_SECONDS", "1.0"))
+PLUGIN_REGISTER_PAUSE_SECONDS = float(os.getenv("PLUGIN_REGISTER_PAUSE_SECONDS", "60.0"))  # Pause nach einem fehlgeschlagenen Registrierungsdurchlauf
 NW_LETTO_ADDRESS = os.getenv("network_letto_address", os.getenv("NETWORK_LETTO_ADDRESS", "letto-plugindemopython"))
 DOCKER_CONTAINER_NAME = os.getenv("docker_container_name", os.getenv("DOCKER_CONTAINER_NAME", "letto-plugindemopython"))
 LETTO_PLUGIN_URI_INTERN = os.getenv("letto_plugin_uri_intern",
@@ -161,13 +162,16 @@ def get_system_info():
     os_name = platform.system()
     os_version = platform.version()
 
-    # IP
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # IP - ohne Default-Route schlägt connect fehl, dann über den Hostnamen auflösen
     try:
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+    except OSError:
+        try:
+            ip = socket.gethostbyname(socket.gethostname())
+        except OSError:
+            ip = ""
 
     return {
         "bs": f"{os_name} {os_version}",
@@ -971,6 +975,25 @@ async def register_plugin_in_setup() -> None:
 
     raise RuntimeError("Plugin konnte nicht beim Setup registriert werden")
 
+
+async def registration_loop() -> None:
+    """
+    Wiederholt die Registrierung so lange, bis sie erfolgreich war.
+    Fehler werden geloggt, statt unbemerkt im Hintergrund-Task zu verschwinden.
+    """
+    while True:
+        try:
+            await register_plugin_in_setup()
+            return
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception(
+                "Registrierung beim Setup fehlgeschlagen - neuer Versuch in %s s",
+                PLUGIN_REGISTER_PAUSE_SECONDS,
+            )
+        await asyncio.sleep(PLUGIN_REGISTER_PAUSE_SECONDS)
+
 # ------------------------------------------
 # Zustandsverarbeitung für die Konfiguration
 # ------------------------------------------
@@ -996,6 +1019,23 @@ class PluginConfigurationState:
         return (int(time.time()) - self.lastAccessTime) > self.timeout
 
 CONFIG_STATES: Dict[str, PluginConfigurationState] = {}
+
+def build_configuration_info(plugin_demo: PluginDemo, configuration_id: str) -> PluginConfigurationInfoDto:
+    """Einzige Stelle, an der die Konfigurations-Information aus den CONF_*-Werten erzeugt wird."""
+    return PluginConfigurationInfoDto(
+        configurationID=configuration_id,
+        configurationMode=plugin_demo.configurationMode,
+        useQuestion=CONF_useQuestion,
+        useVars=CONF_useVars,
+        useCVars=CONF_useCVars,
+        useMaximaVars=CONF_useMaximaVars,
+        useMVars=CONF_useMVars,
+        addDataSet=CONF_addDataSet,
+        calcMaxima=CONF_calcMaxima,
+        externUrl=CONF_externUrl,
+        javaScriptMethode=plugin_demo.CONFIG_JS,
+        configurationUrl="",  # URL-Mode ist hier nicht implementiert
+    )
 
 def cleanup_configuration_states() -> None:
     expired_ids = [cid for cid, state in CONFIG_STATES.items() if state.is_expired()]
@@ -1075,20 +1115,7 @@ def create_or_update_configuration_state(
     if state.pluginDemo is not None:
         state.pluginConfigDto.params["help"] = state.pluginDemo.get_help()
 
-        state.pluginConfigurationInfoDto = PluginConfigurationInfoDto(
-            configurationID=configuration_id,
-            configurationMode=state.pluginDemo.configurationMode,
-            useQuestion=CONF_useQuestion,
-            useVars=CONF_useVars,
-            useCVars=CONF_useCVars,
-            useMaximaVars=CONF_useMaximaVars,
-            useMVars=CONF_useMVars,
-            addDataSet=CONF_addDataSet,
-            calcMaxima=CONF_calcMaxima,
-            externUrl=CONF_externUrl,
-            javaScriptMethode="configPlugin",
-            configurationUrl=LETTO_PLUGIN_URI_EXTERN or "",
-        )
+        state.pluginConfigurationInfoDto = build_configuration_info(state.pluginDemo, configuration_id)
 
     if state.questionDto is not None:
         state.pluginConfigDto.params["vars"] = (
@@ -1106,12 +1133,14 @@ def create_or_update_configuration_state(
 # --------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _registration_task
-
+    registration_task = None
     if PLUGIN_REGISTER_ON_READY:
-        _registration_task = asyncio.create_task(register_plugin_in_setup())
+        registration_task = asyncio.create_task(registration_loop())
 
     yield
+
+    if registration_task is not None and not registration_task.done():
+        registration_task.cancel()
 
 
 app = FastAPI(
@@ -1281,7 +1310,7 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
 
         cid = req.configurationID or ""
         if cid:
-            create_or_update_configuration_state(
+            state = create_or_update_configuration_state(
                 configuration_id=cid,
                 typ=req.typ or "",
                 name=req.name or "",
@@ -1290,21 +1319,9 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
                 question_dto=None,
                 timeout=req.timeout or 300,
             )
+            return state.pluginConfigurationInfoDto
 
-        return PluginConfigurationInfoDto(
-            configurationID=cid,
-            configurationMode=pi.configurationMode,
-            useQuestion=True,
-            useVars=True,
-            useCVars=True,
-            useMaximaVars=True,
-            useMVars=True,
-            addDataSet=False,
-            calcMaxima=False,
-            externUrl=False,
-            javaScriptMethode=pi.CONFIG_JS,
-            configurationUrl="", # URL mode not implemented here
-        )
+        return build_configuration_info(pi, cid)
 
     @r.post("/setconfigurationdata", response_model=PluginConfigDto)
     def set_configuration_data(req: PluginSetConfigurationDataRequestDto):
