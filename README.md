@@ -36,6 +36,7 @@ Der Wert muss mit der `location` in `proxy/plugindemopython.conf` übereinstimme
 - `GET /plugindemopython/open/ping` → `pong`
 - `GET /info` und `GET /plugindemopython/open/info` → `ServiceInfoDTO`
 - `GET /plugindemopython/docs` → API-Doku (Swagger UI)
+- `GET /plugindemopython/`, `/plugindemopython/index.html`, `/plugindemopython/help` → statische Hilfeseite (`resources/index.html`)
 
 Interne Plugin-API (wie Java `@RequestMapping("/open")`):
 - `GET  /open/pluginlist`

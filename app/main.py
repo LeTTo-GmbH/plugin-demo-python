@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, APIRouter, Body
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from pydantic import BaseModel, Field, ConfigDict
 from PIL import Image, ImageDraw
 from dataclasses import dataclass
@@ -1421,6 +1421,14 @@ def info_open():
 @app.get("/version", response_class=PlainTextResponse)
 def version():
     return CONF_VERSION
+
+
+# Statische Hilfeseite des Plugin-Services (resources/index.html), Links darin sind relativ zum SERVICEPATH
+@app.get(f"{SERVICEPATH}/", response_class=HTMLResponse, include_in_schema=False)
+@app.get(f"{SERVICEPATH}/index.html", response_class=HTMLResponse, include_in_schema=False)
+@app.get(f"{SERVICEPATH}/help", response_class=HTMLResponse, include_in_schema=False)
+def help_page():
+    return read_resource_text("index.html")
 
 # Mount internal open API at /open and (for proxy setups) also under {SERVICEPATH}/open
 app.include_router(mount_internal_open(LOCAL_API))

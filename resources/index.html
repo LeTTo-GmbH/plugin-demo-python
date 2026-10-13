@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LeTTo Plugin UhrPy – Hilfe</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5;
+           max-width: 900px; margin: 0 auto; padding: 1.5rem; color: #222; }
+    h1 { margin-bottom: 0.2rem; }
+    .subtitle { color: #666; margin-top: 0; }
+    h2 { border-bottom: 1px solid #ddd; padding-bottom: 0.2rem; margin-top: 2rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 0.35rem 0.6rem; text-align: left; vertical-align: top; }
+    th { background: #f3f3f3; }
+    code { background: #f3f3f3; padding: 0 0.25rem; border-radius: 3px; }
+    ul.links li { margin-bottom: 0.3rem; }
+  </style>
+</head>
+<body>
+  <h1>LeTTo Plugin „UhrPy“</h1>
+  <p class="subtitle">Demo-Plugin für LeTTo in Python (FastAPI) – Portierung von plugin-demo-java</p>
+
+  <h2>Dokumentation und Links</h2>
+  <ul class="links">
+    <li><a href="docs" target="_blank">API-Dokumentation (Swagger UI)</a></li>
+    <li><a href="redoc" target="_blank">API-Dokumentation (ReDoc)</a></li>
+    <li><a href="openapi.json" target="_blank">OpenAPI-Spezifikation (JSON)</a></li>
+    <li><a href="https://github.com/LeTTo-GmbH/plugin-demo-python" target="_blank">Quellcode auf GitHub</a></li>
+    <li><a href="https://doc.letto.at/wiki/Plugins" target="_blank">LeTTo-Wiki: Plugins</a></li>
+    <li><a href="open/info" target="_blank">Service-Information</a> · <a href="open/ping" target="_blank">Ping</a></li>
+  </ul>
+
+  <h2>Beschreibung</h2>
+  <p>
+    Das Plugin dient zur Veranschaulichung der Plugin-Schnittstelle von LeTTo und sollte nicht im Unterricht
+    eingesetzt werden. Es zeigt ein Uhrblatt, auf dem die Schülerin bzw. der Schüler durch Klicken die Zeiger
+    stellt. Die eingestellte Uhrzeit wird als Antwort im Format <code>HH:MM</code> an LeTTo übergeben und vom
+    Plugin bewertet.
+  </p>
+  <ul>
+    <li>Das Uhrblatt (ohne Zeiger) wird vom Plugin-Service als PNG erzeugt.</li>
+    <li>Die Zeiger und die Eingabe werden im Browser per JavaScript (<code>initPluginUhrPy</code>) gezeichnet.</li>
+    <li>Die Konfiguration erfolgt über einen JavaScript-Dialog (<code>configPluginUhrPy</code>) mit Live-Vorschau.</li>
+  </ul>
+
+  <h2>Konfigurations-Parameter</h2>
+  <p>Alle Parameter werden durch Strichpunkt getrennt, z.&nbsp;B. <code>mode=js;bgcolor=green</code>.</p>
+  <table>
+    <tr><th>Parameter</th><th>Beschreibung</th><th>Beispiel</th></tr>
+    <tr><td><code>mode=js</code></td><td>Konfigurationsdialog mit JavaScript (Standard)</td><td><code>mode=js</code></td></tr>
+    <tr><td><code>mode=iframe</code></td><td>Konfigurationsdialog über einen iFrame (URL-Modus, in der Python-Version noch nicht implementiert)</td><td><code>mode=iframe</code></td></tr>
+    <tr><td><code>bgcolor=</code></td><td>Hintergrundfarbe der Uhr: <code>white</code>, <code>black</code>, <code>red</code>, <code>green</code>, <code>blue</code>, <code>yellow</code></td><td><code>bgcolor=green</code></td></tr>
+  </table>
+
+  <h2>Bewertung</h2>
+  <ul>
+    <li>Verglichen wird die Zeigerstellung: 12- und 24-Stunden-Angaben sind gleichwertig
+        (<code>3:15</code> = <code>15:15</code>), der Abstand wird über 12&nbsp;Uhr hinweg korrekt berechnet
+        (<code>11:59</code> und <code>0:01</code> liegen 2&nbsp;Minuten auseinander).</li>
+    <li>Toleranz <code>RELATIV</code>: 100&nbsp;% entsprechen einer Stunde, 1&nbsp;% also 36&nbsp;Sekunden.</li>
+    <li>Toleranz <code>ABSOLUT</code>: Angabe in Sekunden.</li>
+    <li>Ohne Toleranzangabe muss die Uhrzeit exakt stimmen.</li>
+  </ul>
+
+  <h2>Endpoints</h2>
+  <table>
+    <tr><th>Pfad</th><th>Beschreibung</th></tr>
+    <tr><td><code>/open/*</code></td><td>Interne Plugin-API, wird von LeTTo im Docker-Netz aufgerufen</td></tr>
+    <tr><td><code>&lt;servicepfad&gt;/open/*</code></td><td>Derselbe Satz an Endpoints über den Proxy</td></tr>
+    <tr><td><code>&lt;servicepfad&gt;/api/open/*</code></td><td>Externe Open-API für den Browser (z.&nbsp;B. <code>reloadplugindto</code> für die Vorschau im Konfigurationsdialog)</td></tr>
+    <tr><td><code>&lt;servicepfad&gt;/</code>, <code>/index.html</code>, <code>/help</code></td><td>Diese Hilfeseite</td></tr>
+  </table>
+</body>
+</html>
