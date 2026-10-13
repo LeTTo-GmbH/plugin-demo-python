@@ -201,13 +201,26 @@ def parse_time_seconds(s: str) -> float:
     raise ValueError("invalid time format")
 
 
-def equals_with_tolerance(a: float, b: float, toleranz: float, mode: str) -> bool:
-    # mode: "RELATIV" or "ABSOLUT"
+CLOCK_CYCLE_SECONDS = 12 * 3600.0   # Zeiger stehen nach 12 Stunden wieder gleich
+TOLERANZ_REF_SECONDS = 3600.0       # RELATIV: 100% entsprechen einer Stunde
+
+
+def clock_diff_seconds(a: float, b: float) -> float:
+    """
+    Abstand zweier Uhrzeiten in Sekunden bezogen auf die Zeigerstellung:
+    12- und 24-Stunden-Angaben (3:15 / 15:15) sind gleich, 11:59 und 0:01 liegen 2 Minuten auseinander.
+    """
+    diff = abs(a - b) % CLOCK_CYCLE_SECONDS
+    return min(diff, CLOCK_CYCLE_SECONDS - diff)
+
+
+def clock_equals_with_tolerance(a: float, b: float, toleranz: float, mode: str) -> bool:
+    # mode: "ABSOLUT" -> Toleranz in Sekunden, "RELATIV" (default) -> Toleranz bezogen auf eine Stunde (0.01 = 36 s)
     if mode == "ABSOLUT":
-        return abs(a - b) <= toleranz
-    # RELATIV (default)
-    ref = max(abs(a), abs(b), 1e-12)
-    return abs(a - b) <= toleranz * ref
+        erlaubt = toleranz
+    else:
+        erlaubt = toleranz * TOLERANZ_REF_SECONDS
+    return clock_diff_seconds(a, b) <= erlaubt
 
 
 def read_resource_text(rel_path: str) -> str:
@@ -805,7 +818,7 @@ class PluginDemo:
             else:
                 t = 1e-10
                 mode = "RELATIV"
-            if equals_with_tolerance(richtig, eingabe, t, mode  or ""):
+            if clock_equals_with_tolerance(richtig, eingabe, t, mode  or ""):
                 info.punkteIst  = float(grade)
                 info.status  = "OK"
         except ValueError:
