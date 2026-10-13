@@ -870,7 +870,7 @@ async def _wait_until_service_is_ready() -> dict:
                     logger.info("Service ist vollständig erreichbar und bereit für Setup-Registrierung")
                     return urls
             except Exception as ex:
-                logger.info("Service noch nicht bereit (%s/%s): %s", attempt, PLUGIN_REGISTER_RETRIES, ex)
+                logger.info("Service noch nicht bereit (%s/%s): %s: %s", attempt, PLUGIN_REGISTER_RETRIES, type(ex).__name__, ex)
 
             await asyncio.sleep(PLUGIN_REGISTER_DELAY_SECONDS)
 
@@ -965,9 +965,10 @@ async def register_plugin_in_setup() -> None:
                 )
             except Exception as ex:
                 logger.warning(
-                    "Fehler bei Registrierung (%s/%s): %s",
+                    "Fehler bei Registrierung (%s/%s): %s: %s",
                     attempt,
                     PLUGIN_REGISTER_RETRIES,
+                    type(ex).__name__,
                     ex,
                 )
 
