@@ -27,10 +27,15 @@ docker build -t letto-plugin-demopython:latest -f Dockerfile .
 * Immer zuerst den Container neu starten (docker restart letto-plugindemopython), damit die Debug-Optionen wirksam werden.
 * Dann Attach to DAP starten.
 
+## Servicepfad
+Alle externen Endpoints liegen unter dem `SERVICEPATH` (Standard: `/plugindemopython`).
+Der Wert muss mit der `location` in `proxy/plugindemopython.conf` übereinstimmen.
+
 ## Wichtige Endpoints
 - `GET /ping`  → `pong`
-- `GET /plugindemo/open/ping` → `pong`
-- `GET /info` und `GET /plugindemo/open/info` → `ServiceInfoDTO`
+- `GET /plugindemopython/open/ping` → `pong`
+- `GET /info` und `GET /plugindemopython/open/info` → `ServiceInfoDTO`
+- `GET /plugindemopython/docs` → API-Doku (Swagger UI)
 
 Interne Plugin-API (wie Java `@RequestMapping("/open")`):
 - `GET  /open/pluginlist`
@@ -43,10 +48,10 @@ Interne Plugin-API (wie Java `@RequestMapping("/open")`):
 - `POST /open/score`
 - ...
 
-Für Proxy-Setups wird zusätzlich derselbe Satz unter `/plugindemo/open/*` angeboten.
+Für Proxy-Setups wird zusätzlich derselbe Satz unter `/plugindemopython/open/*` angeboten.
 
 Externe Open-API (wie Java `@RequestMapping("/plugindemo/api/open")`):
-- `GET  /plugindemo/api/open/pluginlist`
-- `GET  /plugindemo/api/open/generalinfolist`
-- `POST /plugindemo/api/open/generalinfo`
-- `POST /plugindemo/api/open/reloadplugindto`
+- `GET  /plugindemopython/api/open/pluginlist`
+- `GET  /plugindemopython/api/open/generalinfolist`
+- `POST /plugindemopython/api/open/generalinfo`
+- `POST /plugindemopython/api/open/reloadplugindto`

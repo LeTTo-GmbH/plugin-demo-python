@@ -16,7 +16,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: "${PLUGINDEMO_MEMORY_LIMIT:-500m}"
+          memory: "${PLUGINDEMOPYTHON_MEMORY_LIMIT:-500m}"
     logging:
       driver: "json-file"
       options:
@@ -41,7 +41,7 @@ services:
       letto_user_user_password: ${SERVICE_USER_PASSWORD}
       letto_user_gast_password: ${SERVICE_GAST_PASSWORD}
       letto_setup_uri: ${LETTO_SETUP_URI:-http://letto-setup.nw-letto:8096}
-      letto_plugin_uri_intern: ${LETTO_PLUGINDEMO_URI_INTERN:-http://letto-plugindemopython.nw-letto:8080}
+      letto_plugin_uri_intern: ${LETTO_PLUGINDEMOPYTHON_URI_INTERN:-http://letto-plugindemopython.nw-letto:8080}
       letto_plugin_uri_extern: ${LETTO_PLUGIN_URI_EXTERN:-https://${SERVER_NAME}}
       letto_pathImages: /opt/letto/images
       letto_pathPlugins: /opt/letto/plugins

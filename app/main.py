@@ -97,7 +97,6 @@ LETTO_SETUP_URI = os.getenv("letto_setup_uri", os.getenv("LETTO_SETUP_URI", "htt
     "/")
 LETTO_SETUP_USER = "user"
 LETTO_SETUP_PASSWORD = os.getenv("letto_user_user_password", os.getenv("LETTO_USER_USER_PASSWORD", ""))
-PLUGIN_ENDPOINT_NAME = os.getenv("PLUGIN_ENDPOINT_NAME", "plugindemo")
 PLUGIN_REGISTER_ON_READY = os.getenv("PLUGIN_REGISTER_ON_READY", "true").lower() == "true"
 PLUGIN_REGISTER_RETRIES = int(os.getenv("PLUGIN_REGISTER_RETRIES", "30"))
 PLUGIN_REGISTER_DELAY_SECONDS = float(os.getenv("PLUGIN_REGISTER_DELAY_SECONDS", "1.0"))
@@ -831,7 +830,7 @@ def _build_service_base_urls() -> dict:
     """
     Erzeugt die öffentlichen URLs, unter denen das Setup dieses Service erreicht.
     PLUGIN_PUBLIC_URL muss die aus dem Docker-Netz erreichbare URL sein,
-    z.B. http://pluginuhr-python:8080
+    z.B. http://letto-plugindemopython.nw-letto:8080
     """
     base = LETTO_PLUGIN_URI_INTERN.rstrip("/")
     return {
@@ -840,7 +839,7 @@ def _build_service_base_urls() -> dict:
         "pluginlist": f"{base}/open/pluginlist",
         "generalinfolist": f"{base}/open/generalinfolist",
         "generalinfo": f"{base}/open/generalinfo",
-        "reloadplugindto": f"{base}{CONF_STANDARD_SERVICEPATH}/api/open/reloadplugindto",
+        "reloadplugindto": f"{base}{EXTERN_OPEN}/reloadplugindto",
         "info": f"{base}/info",
     }
 
@@ -1148,6 +1147,10 @@ app = FastAPI(
     title="LeTTo Plugin Demo (Python)",
     version=CONF_VERSION,
     lifespan=lifespan,
+    # API-Doku unter dem SERVICEPATH, damit sie über den Proxy erreichbar ist
+    docs_url=f"{SERVICEPATH}/docs",
+    redoc_url=f"{SERVICEPATH}/redoc",
+    openapi_url=f"{SERVICEPATH}/openapi.json",
 )
 
 
@@ -1390,11 +1393,11 @@ def ping_open():
 @app.get(INFO, response_model=ServiceInfoDTO)
 def info():
     return ServiceInfoDTO(
-        serviceName="plugindemo",
-        version="python",
+        serviceName=CONF_APPLICATION_NAME,
+        version=CONF_VERSION,
         author="LeTTo",
         starttime=datetime.now().isoformat(),
-        adminInfoDto=AdminInfoDto(applicationname="plugindemo"),
+        adminInfoDto=AdminInfoDto(applicationname=CONF_APPLICATION_NAME),
     )
 
 
@@ -1406,7 +1409,7 @@ def info_open():
 def version():
     return CONF_VERSION
 
-# Mount internal open API at /open and (for proxy setups) also under /plugindemo/open
+# Mount internal open API at /open and (for proxy setups) also under {SERVICEPATH}/open
 app.include_router(mount_internal_open(LOCAL_API))
 app.include_router(mount_internal_open(f"{SERVICEPATH}/open"))
 
