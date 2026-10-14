@@ -357,7 +357,7 @@ class CalcParamsDto(BaseModel):
     rekursiv: bool = True
     symbolicMode: bool = False
     showpotenz: Optional[str] = "AUTO"           # AUTO, POW, SQRT
-    calcmode: Optional[str] = "MAXIMA"           # MAXIMA, LOESUNG, ERGEBNIS, VIEW
+    calcmode: Optional[str] = "MAXIMA"           # MAXIMA, LOESUNG, EQUALS, VIEW
     ausmultiplizieren: bool = True
     herausheben: bool = True
     forceOpt: bool = True
