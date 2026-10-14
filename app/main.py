@@ -1133,7 +1133,7 @@ app = FastAPI(
     lifespan=lifespan,
     # API-Doku unter dem SERVICEPATH, damit sie über den Proxy erreichbar ist
     docs_url=f"{SERVICEPATH}/docs",
-    redoc_url=f"{SERVICEPATH}/redoc",
+    redoc_url=None,  # ReDoc nicht benötigt - Swagger UI reicht
     openapi_url=f"{SERVICEPATH}/openapi.json",
     # Swagger UI: Endpoints innerhalb einer Gruppe alphabetisch nach Pfad (und Methode) sortieren
     swagger_ui_parameters={"operationsSorter": "alpha", "tagsSorter": "alpha"},
@@ -1437,7 +1437,7 @@ app.include_router(extern_router)
 
 
 # --------------------------
-# OpenAPI: Pfade und Schemas alphabetisch sortiert (Swagger UI, ReDoc und openapi.json)
+# OpenAPI: Pfade und Schemas alphabetisch sortiert (Swagger UI und openapi.json)
 # --------------------------
 def sorted_openapi() -> Dict[str, Any]:
     if app.openapi_schema:
