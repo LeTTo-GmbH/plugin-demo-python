@@ -1437,12 +1437,106 @@ app.include_router(extern_router)
 
 
 # --------------------------
+# OpenAPI: Links zur Referenz-Doku (Endpoints, DTOs, Enums) - die Python-Version implementiert dieselbe API
+# --------------------------
+DOC_BASE_URL = "https://doc.letto.at/wiki/Plugins/referenz-plugin-java/"
+DOC_REST_URL = DOC_BASE_URL + "rest-schnittstelle/"
+DOC_DTO_URL = DOC_BASE_URL + "dtos/"
+DOC_ENUM_URL = DOC_BASE_URL + "enums/"
+
+# Pfad-Suffix der Plugin-API -> Doku-Seite des Endpoints (ApiController bzw. ApiExternOpenController)
+DOC_API_ENDPOINTS = {
+    "/angabe": "getAngabe",
+    "/configurationinfo": "configurationInfo",
+    "/generalinfo": "pluginGeneralInfo",
+    "/generalinfolist": "pluginGeneralInfoList",
+    "/generatedatasets": "generateDatasets",
+    "/getconfiguration": "getConfiguration",
+    "/gethtml": "getHtml",
+    "/getvars": "getVars",
+    "/image": "getImage",
+    "/imagetemplates": "getImageTemplates",
+    "/loadplugindto": "loadPluginDto",
+    "/maxima": "getMaxima",
+    "/modifyangabe": "modifyAngabe",
+    "/modifyangabetextkomplett": "modifyAngabeTextkomplett",
+    "/parserplugin": "parserPlugin",
+    "/parserplugineinheit": "parserPluginEinheit",
+    "/pluginlist": "pluginList",
+    "/reloadplugindto": "reloadPluginDto",
+    "/renderlatex": "renderLatex",
+    "/renderpluginresult": "renderPluginResult",
+    "/score": "score",
+    "/setconfigurationdata": "setConfigurationData",
+    "/updatepluginstringjavascript": "updatePluginstringJavascript",
+}
+
+# Info-Endpoints -> Doku-Seite (InfoController)
+DOC_INFO_ENDPOINTS = {
+    PING: "InfoController/ping",
+    PING_SERVICEPATH: "InfoController/ping",
+    PINGOPEN: "InfoController/pingopen",
+    INFO: "InfoController/info",
+    INFO_OPEN: "InfoController/infoOpen",
+    "/version": "InfoController/version",
+}
+
+# DTO-Felder, die in Java als Enum typisiert sind (hier als String übertragen) -> Enum-Doku-Seite
+DOC_ENUM_FIELDS = {
+    ("CalcErgebnisDto", "type"): "CALCERGEBNISTYPE",
+    ("CalcParamsDto", "calcmode"): "CALCMODE",
+    ("CalcParamsDto", "showpotenz"): "SHOWPOTENZ",
+    ("ImageInfoDto", "unit"): "IMAGEUNIT",
+    ("PluginGeneralInfo", "inputElement"): "InputElement",
+    ("PluginScoreInfoDto", "status"): "Score",
+    ("ToleranzDto", "mode"): "TOLERANZMODE",
+}
+
+# DTOs, die keine Doku-Seite haben (FastAPI-interne Fehler-Schemas)
+DOC_SCHEMAS_WITHOUT_DOC = {"HTTPValidationError", "ValidationError"}
+
+
+def endpoint_doc_url(path: str) -> Optional[str]:
+    if path in DOC_INFO_ENDPOINTS:
+        return DOC_REST_URL + DOC_INFO_ENDPOINTS[path] + "/"
+    for prefix, controller in ((EXTERN_OPEN, "ApiExternOpenController"),
+                               (f"{SERVICEPATH}/open", "ApiController"),
+                               (LOCAL_API, "ApiController")):
+        if path.startswith(prefix + "/"):
+            page = DOC_API_ENDPOINTS.get(path[len(prefix):])
+            if page:
+                return f"{DOC_REST_URL}{controller}/{page}/"
+    return None
+
+
+def add_doc_links(schema: Dict[str, Any]) -> None:
+    schema["info"]["description"] = (
+        f"Python-Portierung des [Referenz-Plugins (Java)]({DOC_BASE_URL}). "
+        f"Doku: [REST-Schnittstelle]({DOC_REST_URL}) · [DTOs]({DOC_DTO_URL}) · [Enums]({DOC_ENUM_URL})"
+    )
+    schema["externalDocs"] = {"description": "Referenz-Plugin (Java) – Dokumentation", "url": DOC_BASE_URL}
+    for path, ops in schema.get("paths", {}).items():
+        url = endpoint_doc_url(path)
+        if url:
+            for op in ops.values():
+                op["externalDocs"] = {"description": "Doku zum Endpoint", "url": url}
+    for name, dto in schema.get("components", {}).get("schemas", {}).items():
+        if name in DOC_SCHEMAS_WITHOUT_DOC:
+            continue
+        dto["externalDocs"] = {"description": f"Doku zu {name}", "url": f"{DOC_DTO_URL}{name}/"}
+        for (dto_name, field), enum in DOC_ENUM_FIELDS.items():
+            if dto_name == name and field in dto.get("properties", {}):
+                dto["properties"][field]["description"] = f"Enum [{enum}]({DOC_ENUM_URL}{enum}/)"
+
+
+# --------------------------
 # OpenAPI: Pfade und Schemas alphabetisch sortiert (Swagger UI und openapi.json)
 # --------------------------
 def sorted_openapi() -> Dict[str, Any]:
     if app.openapi_schema:
         return app.openapi_schema
     schema = get_openapi(title=app.title, version=app.version, routes=app.routes)
+    add_doc_links(schema)
     schema["paths"] = {
         path: dict(sorted(ops.items()))
         for path, ops in sorted(schema.get("paths", {}).items())
