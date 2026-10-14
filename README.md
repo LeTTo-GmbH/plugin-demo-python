@@ -8,6 +8,10 @@ Der Fokus liegt auf denselben Endpoints + dem Demo-Plugin **Uhr1**.
 docker build -t letto-plugin-demopython:latest -f Dockerfile .
 ```
 
+## Docker Hub
+Das Image wird als [lettohub/letto-plugin-demopython](https://hub.docker.com/r/lettohub/letto-plugin-demopython) veröffentlicht.
+Die Beschreibung auf Docker Hub liegt in [dockerhub/README.md](dockerhub/README.md).
+
 ## Installation am LeTTo-Server
 * Installation des Docker-Containers:
   * kopiere yml/docker-service-plugindemopython.yml in /opt/letto/docker/compose/letto/ am LeTTo-Server 
