@@ -60,6 +60,7 @@ Interne Plugin-API (wie Java `@RequestMapping("/open")`):
 - `POST /open/gethtml`
 - `POST /open/angabe`
 - `POST /open/image`
+- `POST /open/imageurl` (speichert das Bild unter `letto_pathPlugins` und liefert die URL über `letto_webPathPlugins`)
 - `POST /open/loadplugindto`
 - `POST /open/score`
 - ...

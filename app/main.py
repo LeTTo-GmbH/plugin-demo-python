@@ -2,6 +2,7 @@ import os
 import re
 import math
 import base64
+import hashlib
 import io
 import asyncio
 import logging
@@ -267,6 +268,40 @@ def draw_clock_png(size: int = 320, bgcolor: str = "white") -> bytes:
 def png_b64(png: bytes) -> str:
     return base64.b64encode(png).decode("ascii")
 
+
+IMAGE_LIFETIME_MS = 365 * 24 * 3600 * 1000   # Gültigkeit eines gespeicherten Bildes wie in Java: ein Jahr
+
+
+def save_plugin_image(png: bytes) -> tuple:
+    """
+    Speichert ein PNG in der Bildablage der Plugins und liefert (Dateiname, öffentliche URL, Fehlermeldung).
+    Ablage wie im Java-Plugin (BaseImageService):
+      Datei: <letto_pathPlugins><SERVICEPATH>/<2 Zeichen>/<md5>.png
+      URL:   https://<letto_webPathPlugins><SERVICEPATH>/<2 Zeichen>/<md5>.png
+    Der Dateiname ist die MD5-Prüfsumme des Bildinhalts; vorhandene Dateien werden nicht neu geschrieben.
+    Die Umgebungsvariablen werden bei jedem Aufruf gelesen, damit Tests sie setzen können.
+    """
+    filename = hashlib.md5(png).hexdigest() + ".png"
+    subdir = filename[:2]
+    local_base = os.getenv("letto_pathPlugins", "")
+    web_base = os.getenv("letto_webPathPlugins", "")
+    if not local_base or not web_base:
+        return filename, "", "letto_pathPlugins bzw. letto_webPathPlugins ist nicht gesetzt"
+    directory = os.path.join(local_base + SERVICEPATH, subdir)
+    path = os.path.join(directory, filename)
+    try:
+        if not os.path.isfile(path):
+            os.makedirs(directory, exist_ok=True)
+            tmp = path + ".tmp"
+            with open(tmp, "wb") as f:
+                f.write(png)
+            os.replace(tmp, path)
+    except OSError as ex:
+        return filename, "", f"Bild {filename} kann nicht gespeichert werden: {ex}"
+    web = re.sub(r"^[a-zA-Z]+:/+", "", web_base.strip())
+    url = "https://" + re.sub(r"/+", "/", f"{web}{SERVICEPATH}/{subdir}/{filename}")
+    return filename, url, ""
+
 # --------------------------
 # DTOs (match Java field names)
 # --------------------------
@@ -310,7 +345,7 @@ class PluginGeneralInfoList(BaseModel):
 class ImageInfoDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     version: Optional[str] = ""
-    pluginType: Optional[str] = ""
+    pluginTyp: Optional[str] = ""     # Feldname wie in Java (ImageInfoDto.pluginTyp)
     filename: Optional[str] = ""
     url: Optional[str] = ""
     width: int = 0
@@ -326,7 +361,7 @@ class ImageInfoDto(BaseModel):
 class ImageUrlDto(BaseModel):
     model_config = ConfigDict(extra="ignore")
     imageUrl: Optional[str] = None
-    imageInfo: Optional[ImageInfoDto] = None
+    imageInfoDto: Optional[ImageInfoDto] = None   # Feldname wie in Java, wird vom LeTTo-Server gelesen
     error: Optional[str] = None
 
 
@@ -744,6 +779,27 @@ class PluginDemo:
     def get_image_base64(self, params: str, q: Optional[PluginQuestionDto]) -> ImageBase64Dto:
         png = draw_clock_png(320, bgcolor=self.bgcolor)
         return ImageBase64Dto(base64Image=png_b64(png), imageInfoDto=ImageInfoDto(filename="", url=""), error=self.configMessage)
+
+    def get_image_url(self, params: str, q: Optional[PluginQuestionDto]) -> ImageUrlDto:
+        """Speichert das Uhrblatt in der Bildablage und liefert seine öffentliche URL (Java: getImageUrl)."""
+        size = 320
+        png = draw_clock_png(size, bgcolor=self.bgcolor)
+        filename, url, error = save_plugin_image(png)
+        errors = ", ".join(e for e in (self.configMessage, error) if e)
+        info = ImageInfoDto(
+            version=self.VERSION,
+            pluginTyp=CONF_PLUGIN,
+            filename=filename,
+            url=url,
+            width=size,
+            height=size,
+            unit="percent",
+            imageWidth=100,
+            alternate="Plugin-Bild",
+            title=f"{CONF_PLUGIN} {self.name}",
+            lifetime=int(time.time() * 1000) + IMAGE_LIFETIME_MS,
+        )
+        return ImageUrlDto(imageUrl=url, imageInfoDto=info, error=errors)
 
     def get_html(self, params: str, q: Optional[PluginQuestionDto]) -> str:
         # keep it simple: LeTTo JS renders the image from PluginDto; still return a helpful HTML snippet
@@ -1215,6 +1271,13 @@ def mount_internal_open(router_prefix: str) -> APIRouter:
         pi = create_plugin(req.typ or "", req.name or "", req.config or "")
         return ImageBase64Dto(error="unknown plugin") if not pi else pi.get_image_base64(req.params or "", req.q)
 
+    # Liefert eine öffentliche URL auf das Bild. Der LeTTo-Server ruft diesen Endpoint vor /image auf
+    # und verwendet das Base64-Bild nur, wenn hier keine URL geliefert wird.
+    @r.post("/imageurl", response_model=ImageUrlDto)
+    def image_url(req: PluginRequestDto):
+        pi = create_plugin(req.typ or "", req.name or "", req.config or "")
+        return ImageUrlDto(imageUrl="", error="unknown plugin") if not pi else pi.get_image_url(req.params or "", req.q)
+
     @r.post("/imagetemplates")
     def image_templates(req: PluginRequestDto):
         # PluginUhr.getImageTemplates returns Vector<String[]>
@@ -1457,6 +1520,7 @@ DOC_API_ENDPOINTS = {
     "/gethtml": "getHtml",
     "/getvars": "getVars",
     "/image": "getImage",
+    "/imageurl": "getImageUrl",
     "/imagetemplates": "getImageTemplates",
     "/loadplugindto": "loadPluginDto",
     "/maxima": "getMaxima",
