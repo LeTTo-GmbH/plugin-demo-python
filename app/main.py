@@ -1443,6 +1443,8 @@ DOC_BASE_URL = "https://doc.letto.at/wiki/Plugins/referenz-plugin-java/"
 DOC_REST_URL = DOC_BASE_URL + "rest-schnittstelle/"
 DOC_DTO_URL = DOC_BASE_URL + "dtos/"
 DOC_ENUM_URL = DOC_BASE_URL + "enums/"
+# Doku der Python-Version: Aufbau, eigenes Plugin, Unterschiede zur Java-Version
+DOC_PYTHON_URL = "https://doc.letto.at/wiki/Plugins/referenz-plugin-python/"
 
 # Pfad-Suffix der Plugin-API -> Doku-Seite des Endpoints (ApiController bzw. ApiExternOpenController)
 DOC_API_ENDPOINTS = {
@@ -1512,9 +1514,11 @@ def endpoint_doc_url(path: str) -> Optional[str]:
 def add_doc_links(schema: Dict[str, Any]) -> None:
     schema["info"]["description"] = (
         f"Python-Portierung des [Referenz-Plugins (Java)]({DOC_BASE_URL}). "
-        f"Doku: [REST-Schnittstelle]({DOC_REST_URL}) · [DTOs]({DOC_DTO_URL}) · [Enums]({DOC_ENUM_URL})"
+        f"Doku der Python-Version: [Referenz-Plugin (Python)]({DOC_PYTHON_URL}) · "
+        f"[Unterschiede zur Java-Version]({DOC_PYTHON_URL}rest-schnittstelle/). "
+        f"Gemeinsame Schnittstelle: [REST-Schnittstelle]({DOC_REST_URL}) · [DTOs]({DOC_DTO_URL}) · [Enums]({DOC_ENUM_URL})"
     )
-    schema["externalDocs"] = {"description": "Referenz-Plugin (Java) – Dokumentation", "url": DOC_BASE_URL}
+    schema["externalDocs"] = {"description": "Referenz-Plugin (Python) – Dokumentation", "url": DOC_PYTHON_URL}
     for path, ops in schema.get("paths", {}).items():
         url = endpoint_doc_url(path)
         if url:

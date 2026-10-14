@@ -57,3 +57,16 @@ def test_enum_felder_verlinken_doku():
 
 def test_hilfeseite_verlinkt_referenz_doku():
     assert DOC_BASE in client.get("/plugindemopython/help").text
+
+
+DOC_PYTHON = "https://doc.letto.at/wiki/Plugins/referenz-plugin-python/"
+
+
+def test_openapi_verlinkt_python_doku():
+    schema = openapi()
+    assert schema["externalDocs"]["url"] == DOC_PYTHON
+    assert f"({DOC_PYTHON})" in schema["info"]["description"]
+
+
+def test_hilfeseite_verlinkt_python_doku():
+    assert DOC_PYTHON in client.get("/plugindemopython/help").text

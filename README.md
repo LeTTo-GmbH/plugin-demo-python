@@ -3,6 +3,10 @@
 Dieses Projekt ist eine Python/FastAPI-Portierung der REST-API aus `plugin-demo-java`.
 Der Fokus liegt auf denselben Endpoints + dem Demo-Plugin **Uhr1**.
 
+## Dokumentation
+* [Referenz-Plugin (Python)](https://doc.letto.at/wiki/Plugins/referenz-plugin-python/) – Doku dieses Projekts: Architektur, eigenes Plugin erstellen, Plugin-API, REST-Schnittstelle und DTOs mit den Unterschieden zur Java-Version, Build und Deployment
+* [Referenz-Plugin (Java)](https://doc.letto.at/wiki/Plugins/referenz-plugin-java/) – ausführliche Beschreibung jedes Endpoints, DTOs und Enums der gemeinsamen REST-Schnittstelle
+
 ## Build des Docker-Containers (build.bat)
 ```bash
 docker build -t letto-plugin-demopython:latest -f Dockerfile .

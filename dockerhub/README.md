@@ -13,11 +13,13 @@ Die eingestellte Uhrzeit wird als Antwort (`HH:MM`) an LeTTo übergeben und vom 
 |---|---|
 | Quellcode (Python) | <https://github.com/LeTTo-GmbH/plugin-demo-python> |
 | Referenz-Plugin (Java) | <https://github.com/LeTTo-GmbH/plugin-demo-java> |
-| Dokumentation Referenz-Plugin | <https://doc.letto.at/wiki/Plugins/referenz-plugin-java/> |
+| Dokumentation dieses Plugins (Python) | <https://doc.letto.at/wiki/Plugins/referenz-plugin-python/> |
+| Eigenes Plugin in Python erstellen | <https://doc.letto.at/wiki/Plugins/referenz-plugin-python/eigenes-plugin/> |
+| Unterschiede zur Java-Version (REST) | <https://doc.letto.at/wiki/Plugins/referenz-plugin-python/rest-schnittstelle/> |
+| Dokumentation Referenz-Plugin (Java) | <https://doc.letto.at/wiki/Plugins/referenz-plugin-java/> |
 | REST-Schnittstelle | <https://doc.letto.at/wiki/Plugins/referenz-plugin-java/rest-schnittstelle/> |
 | DTOs | <https://doc.letto.at/wiki/Plugins/referenz-plugin-java/dtos/> |
 | Enums | <https://doc.letto.at/wiki/Plugins/referenz-plugin-java/enums/> |
-| Eigenes Plugin erstellen | <https://doc.letto.at/wiki/Plugins/referenz-plugin-java/eigenes-plugin/> |
 | LeTTo-Wiki: Plugins | <https://doc.letto.at/wiki/Plugins/> |
 | LeTTo | <https://letto.at> |
 
