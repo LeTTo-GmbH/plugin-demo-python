@@ -15,6 +15,12 @@ docker build -t letto-plugin-demopython:latest -f Dockerfile .
 ## Docker Hub
 Das Image wird als [lettohub/letto-plugin-demopython](https://hub.docker.com/r/lettohub/letto-plugin-demopython) veröffentlicht.
 Die Beschreibung auf Docker Hub liegt in [dockerhub/README.md](dockerhub/README.md).
+Hochladen in einer PowerShell-Konsole (Docker-Hub-Zugang mit Schreibrecht auf `lettohub` nötig):
+```bash
+powershell -ExecutionPolicy Bypass -File dockerhub\dockerhub-description.ps1
+```
+Zugangsdaten verwendet das Script in dieser Reihenfolge: `-User`/`-Token` bzw. `DOCKERHUB_TOKEN`,
+die Anmeldung von Docker Desktop, interaktive Abfrage. Ohne Zugangsdaten und ohne Eingabemöglichkeit bricht es mit einer Meldung ab.
 
 ## Installation am LeTTo-Server
 * Installation des Docker-Containers:
